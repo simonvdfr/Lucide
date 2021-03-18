@@ -45,6 +45,10 @@ switch($_GET['mode'])
 		<div class="overlay"></div>
 		
 		<script>
+			document.querySelector('#login-close').addEventListener('click', function() {
+				document.querySelector('#login').remove();
+			});
+
 			document.querySelector('#login').addEventListener('submit', function() {
 
 				event.preventDefault();
@@ -66,6 +70,8 @@ switch($_GET['mode'])
 				xhr.send('user='+user+'&password='+password);
 
 			});
+
+
         </script>
 		<?
 		//}
