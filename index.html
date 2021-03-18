@@ -19,7 +19,7 @@
 
 				
 		<link rel="stylesheet" href="style.css">	
-		<link rel="shortcut icon" type="image/x-icon" href="favicon.png">
+		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
 	</head>
 
@@ -91,13 +91,26 @@
 
         </footer>
 
-        <a id="edit" class="bt">Editer</a>
+        
         <a href="#" id="top" class="bt">haut</a>
+
+        <!-- plugin d'édition de contenu -->
+        <a id="edit" class="bt">Editer</a>
+        <script>
+            document.querySelector('#edit.bt').addEventListener('click', function() {	
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'lucide/ajax.php?mode=login',true);
+                xhr.onload = function() {
+                    const response = document.createRange().createContextualFragment(this.response);
+                    document.body.append(response);
+                }
+                xhr.send();
+            });
+        </script>
+        <!-- fin plugin d'édition de contenu-->
 
     </body>
 
-    <script>
-        
-    </script>
+    
 
 </html>

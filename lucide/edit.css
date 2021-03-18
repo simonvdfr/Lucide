@@ -4,6 +4,130 @@ body { transition: margin-top .2s linear; }
 
 /* Légère transition sur les FontAwesome */
 /* .fa { transition: all 0.3s; } */
+#login {
+	position:fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	z-index: 15;
+	background-color: rgba(255,255,255,0.9);
+
+	min-width: 300px;
+
+	border: 0px;
+	border-radius: .5rem;
+
+	box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+
+}
+	#login header {	
+		padding: 1rem;
+		text-align: center;
+	}
+	#login header i {
+		position:absolute;
+		top: -40%;
+		left: 50%;
+		transform: translate(-50%) rotate(-35deg);
+		font-style: normal;
+		color: #fff;
+		height: 80px;
+		width: 80px;
+		padding-top: .6rem;
+		background-color: #3B7877;
+		text-align: center;
+		border-radius : 50px;
+		font-size: 6rem;
+		line-height: 1;;
+	}
+	#login header > div {
+		position: relative;
+		display: inline-block;
+		padding-top: 4rem;
+	}
+	#login header > div:after {
+		content:'';
+		display: block;
+		width: 25px;
+		height: 2px;
+		background-color: #3B7877;
+		position: relative;
+		z-index: inherit;
+		margin: .5rem auto;
+	}
+
+	#login header #login-close{float: right;}
+
+	#login main {
+		padding: 0 2rem;
+	}
+		#login main > div {
+			margin: 1.5rem 0 0 0;
+		}
+
+		#login main label {
+			display: block;
+			font-size: .8em;
+			text-transform: uppercase;
+			font-weight: bold;
+			color: #3B7877;
+		}
+		#login main input {
+			width: 100%;
+			border: 0;
+			border: 1px solid #565656;
+			background-color: #fafafa;
+			border-radius: .3rem;
+			outline: 0;
+			padding: .5rem .3rem;
+		}
+		#login main input:hover {border-color: #111; background-color: #fefefe;}
+		#login main input:focus {border-color: #3B7877; background-color: #fefefe;}
+
+		#login main input#user:after {
+			border-bottom: 1px dotted #111;
+		}
+
+	#login footer {
+		margin: 2rem 0 2.5rem 0;
+		text-align: center;
+		padding: 1rem 2rem;
+	}
+
+	#login footer button[type='submit']{
+		font-size: 1.2em;
+		border-radius: .3rem;
+		border: 0px;
+		line-height: 1;
+		padding: 1rem 1.5rem;
+		background-color: #3B7877;
+		color: #fff;
+		width: 100%;
+		cursor: pointer;
+	}
+
+	#login footer i {
+		display: inline-block;
+		font-style: normal;
+		font-size: 1.6em;
+		vertical-align:sub;
+	}
+
+#login ~ .overlay {
+	content: '';
+	display: block;
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+
+	background-color: rgba(0, 0, 0, 0.5);
+}
+	
+
+	
 
 #admin-bar {		
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);

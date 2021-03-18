@@ -10,6 +10,90 @@ switch($_GET['mode'])
 	default:	
 	break;
 
+	//On affiche la popin de connection
+	case "login" :
+
+		//@todo : conditionner les mode local et online
+		//if(!$dev) {
+		?>
+
+		<link rel="stylesheet" href="lucide/edit.css">	
+		<form id="login" method="POST">
+			<header>
+				<i>🗝</i>
+				<div class="h3-like">Me connecter</div>
+				<a id="login-close">×</a>
+			</header>
+
+			<main>
+				<div>
+					<label for="password">mon identifiant</label>
+					<input id="user" name="user" type="text" placeholder="Identifiant de connection" required>
+				</div>
+				<div>
+					<label for="password">Mon mot de passe</label>
+					<input id="password" type="password" placeholder="Mot de passe de connection" required>
+				</div>
+			</main>
+
+			<footer>
+				<button type="submit">
+					Me connecter
+				</button>
+			</footer>
+		</form>
+		<div class="overlay"></div>
+		
+		<script>
+			document.querySelector('#login').addEventListener('submit', function() {
+
+				event.preventDefault();
+				
+                const xhr = new XMLHttpRequest();
+
+				var user = document.querySelector('#login #user').value
+				var password = document.querySelector('#login #password').value
+
+                xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
+
+				xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.onload = function() {
+                    const response = document.createRange().createContextualFragment(this.response);
+                    document.body.append(response);
+                }
+
+				xhr.send('user='+user+'&password='+password);
+
+			});
+        </script>
+		<?
+		//}
+	break;
+
+	// connection + chargement jquery
+	case "signin" :
+		
+		if(@$_POST['user'] && @$_POST['password']) {
+
+			$ftp = ftp_connect($GLOBALS['ftp_server']);
+
+			if(@ftp_login($ftp, $_POST['user'], $_POST['password'])) {
+			?>
+				<div>connection ok</div>
+			<?
+			}
+			else{
+			?>
+				<div>connection ko</div>
+			<?
+			}
+		} 
+
+		ftp_close($GLOBALS['ftp_server']);
+
+	break;
+
 	case "edit":// Lancement du mode édition du contenu de la page
 				
 		unset($_SESSION['nonce']);// Pour éviter les interférences avec un autre nonce de session
