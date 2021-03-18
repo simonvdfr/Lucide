@@ -62,13 +62,14 @@ body { transition: margin-top .2s linear; }
 		right: 1rem;
 		font-size: 1.5em;
 		color:brown;
+		cursor: pointer;
 	}
 
 	#login main {
 		padding: 0 2rem;
 	}
 		#login main > div {	margin: .5rem 0 0 0;}
-		#login main > div:nth-child(2) {margin: 2rem 0 0 0;}
+		#login main > div:nth-child(2) {margin: 1.5rem 0 1rem 0;}
 
 		#login main label {
 			display: block;
