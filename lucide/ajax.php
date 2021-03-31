@@ -14,11 +14,15 @@ switch($_GET['mode'])
 	case "login" :
 
 		//@todo : conditionner les mode local et online
-		//if(!$dev) {
+		
+		if(!$dev) {
 		?>
 
-		<link rel="stylesheet" href="lucide/edit.css">	
+			
 		<form id="login" method="POST">
+
+			<link rel="stylesheet" href="lucide/edit.min.css">
+
 			<header>
 				<i>🗝</i>
 				<div class="h3-like">Me connecter</div>
@@ -41,40 +45,60 @@ switch($_GET['mode'])
 					Me connecter
 				</button>
 			</footer>
+
+			<script>
+
+				document.querySelector('#login-close').addEventListener('click', function() {
+					document.querySelector('#login').remove();
+				});
+
+				document.querySelector('#login').addEventListener('submit', function() {
+
+					event.preventDefault();
+					
+					const xhr = new XMLHttpRequest();
+
+					var user = document.querySelector('#login #user').value
+					var password = document.querySelector('#login #password').value
+
+					xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
+
+					xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+					xhr.onload = function() {
+						const response = document.createRange().createContextualFragment(this.response);
+						document.body.append(response);
+					}
+
+					xhr.send('user='+user+'&password='+password);
+
+				});
+
+			</script>
+
 		</form>
+
 		<div class="overlay"></div>
 		
-		<script>
-			document.querySelector('#login-close').addEventListener('click', function() {
-				document.querySelector('#login').remove();
-			});
-
-			document.querySelector('#login').addEventListener('submit', function() {
-
-				event.preventDefault();
-				
-                const xhr = new XMLHttpRequest();
-
-				var user = document.querySelector('#login #user').value
-				var password = document.querySelector('#login #password').value
-
-                xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
-
-				xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-                xhr.onload = function() {
-                    const response = document.createRange().createContextualFragment(this.response);
-                    document.body.append(response);
-                }
-
-				xhr.send('user='+user+'&password='+password);
-
-			});
-
-
-        </script>
 		<?
-		//}
+		}
+		else {
+		?>
+			<script>
+
+				var xhr = new XMLHttpRequest();
+				xhr.open('GET', 'lucide/ajax.php?mode=edit',true);
+				xhr.onload = function()
+				{
+					// Execute le js de la response
+					const response = document.createRange().createContextualFragment(this.response);
+					document.body.append(response);
+				}
+				xhr.send();
+
+			</script>
+		<?
+		}
 	break;
 
 	// connection + chargement jquery
@@ -86,25 +110,33 @@ switch($_GET['mode'])
 
 			if(@ftp_login($ftp, $_POST['user'], $_POST['password'])) {
 			?>
-				<div>connection ok</div>
+				<script>
+					document.querySelector('#login').remove();
+					document.querySelector('.overlay').remove();
+
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', 'lucide/ajax.php?mode=edit',true);
+					xhr.onload = function()
+					{
+						// Execute le js de la response
+						const response = document.createRange().createContextualFragment(this.response);
+						document.body.append(response);
+					}
+					xhr.send();
+				</script>
+				
 			<?
 			}
-			else{
-			?>
-				<div>connection ko</div>
-			<?
-			}
+			
 		} 
 
-		ftp_close($GLOBALS['ftp_server']);
+		ftp_close($ftp);
 
 	break;
 
 	case "edit":// Lancement du mode édition du contenu de la page
-				
-		unset($_SESSION['nonce']);// Pour éviter les interférences avec un autre nonce de session
 		
-		login('high', 'edit-'.($_GET['type']?encode($_GET['type']):"page"));// Vérifie que l'on a le droit d'éditer les contenus
+		unset($_SESSION['nonce']);// Pour éviter les interférences avec un autre nonce de session
 		
 		// Si on doit recharger la page avant de lancer le mode édition
 		if(isset($_REQUEST['callback']) and $_REQUEST['callback'] == "reload_edit")
@@ -120,10 +152,11 @@ switch($_GET['mode'])
 		{				
 			// JS pour mettre en mode édit les contenus et ajout d'un nonce pour signer les formulaires
 			?>
+			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
 			<input type="hidden" name="nonce" id="nonce" value="<?=nonce("nonce");?>">
 			
 			<link rel="stylesheet" href="<?=$GLOBALS['jquery_ui_css']?>">
-
 
 			<!-- Barre du haut avec bouton sauvegarder et option -->			
 			<div id="admin-bar" class="none">
