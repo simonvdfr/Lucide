@@ -149,7 +149,7 @@ header #burger-content {
 	}
 
 /* edit */
-#edit, #top {
+#lucide, #top {
 	position: fixed;
     cursor: pointer;
 	font-size: .7em;
@@ -159,8 +159,8 @@ header #burger-content {
 	margin-right: 1rem;
 	z-index: 5;
 }
-#edit {bottom: 10px; left: 10px;}
-	#edit::before {
+#lucide {bottom: 10px; left: 10px;}
+	#lucide::before {
 		content:'✎';
 		display: block;
 		font-size: 2.3rem;
