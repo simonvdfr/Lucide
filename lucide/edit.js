@@ -1181,7 +1181,7 @@ scrollToImg = function(that){
 
 	var scrollTo = (scrollTo > $("#admin-bar").height() ? scrollTo : 0);
 
-	$root.animate({ scrollTop: scrollTo	}, 300, "linear");
+	$("html, body").animate({ scrollTop: scrollTo	}, 300, "linear");
 }
 
 // Liste les images dans la page pour suggérer des optimisations
@@ -1422,7 +1422,7 @@ $(function()
 	// spellcheck="false" wrap="off" autofocus placeholder="Enter something ..."
 	
 	// Pour corriger le drag&drop de texte dans firefox span > div
-	$(".editable").replaceWith(function () { 
+	$(".editable:not(img)").replaceWith(function () { 
 
 		// Pour corriger les div qui ne prennent pas toutes la largeur a cause des img en float
 		var style = null;
@@ -1440,7 +1440,7 @@ $(function()
 	});
 
 	// Rends les textes éditables
-	$(".editable").attr("contenteditable","true");
+	$(".editable:not(img)").attr("contenteditable","true");
 
 
 	// Si readonly
@@ -1811,7 +1811,7 @@ $(function()
 			"blur.editable": function() {
 				if($("#txt-tool:not(:hover)").val()=="") {
 					$("#txt-tool").hide();// ferme la toolbox
-					$window.off(".scroll-toolbox");// Désactive le scroll de la toolbox
+					$(window).off(".scroll-toolbox");// Désactive le scroll de la toolbox
 				}
 			},
 			"dragstart.editable": function() {// Pour éviter les interférences avec les drag&drop d'image dans les champs images
@@ -1865,7 +1865,7 @@ $(function()
 
 					// Si déjà un contenu
 					if(memo_range && memo_range.getClientRects()[0] != undefined)
-						this_top = memo_range.getClientRects()[0].top + $window.scrollTop();// position du caractère + scroll
+						this_top = memo_range.getClientRects()[0].top + $(window).scrollTop();// position du caractère + scroll
 					else 
 						this_top = $(memo_focus).offset().top;// position de la div/tag
 
@@ -1891,9 +1891,9 @@ $(function()
 						});	
 
 					// Positionnement de la toolbox si déjà affiché et gestion du Scroll si on descend
-					$window.on("scroll click.scroll-toolbox", function(event) {
+					$(window).on("scroll click.scroll-toolbox", function(event) {
 						// Si (Hauteur du scroll + hauteur de la bar d'admin en haut + hauteur de la toolbox + pico) > au top de la box editable = on fixe la position de la toolbox en dessou de la barre admin
-						if(($window.scrollTop() + toolbox_height + 12) > this_top_scroll) 
+						if(($(window).scrollTop() + toolbox_height + 12) > this_top_scroll) 
 							toolbox_position(adminbar_height, this_left, "fixed");
 						else
 							toolbox_position(this_top_scroll, this_left, "absolute");
