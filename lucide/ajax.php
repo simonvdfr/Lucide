@@ -6,6 +6,11 @@ include_once("function.php");// Fonction
 $lang = get_lang();// Sélectionne  la langue
 load_translation('api');// Chargement des traductions du système
 
+
+// Si développement en local et que l'on édite, pas de passage par le login
+if($_GET['mode'] == 'login' and $dev) $_GET['mode'] = 'edit';
+
+
 switch($_GET['mode'])
 {
 	default:	
@@ -14,92 +19,68 @@ switch($_GET['mode'])
 
 	//On affiche la popin de connection
 	case "login" :
+		?>			
+		<form id="login" method="POST">
 
-		//@todo : conditionner les mode local et online
-		
-		if(!$dev) 
-		{
-			?>			
-			<form id="login" method="POST">
+			<link rel="stylesheet" href="lucide/edit.min.css">
 
-				<link rel="stylesheet" href="lucide/edit.min.css">
+			<header>
+				<i>🗝</i>
+				<div class="h3-like">Me connecter</div>
+				<a id="login-close">×</a>
+			</header>
 
-				<header>
-					<i>🗝</i>
-					<div class="h3-like">Me connecter</div>
-					<a id="login-close">×</a>
-				</header>
+			<main>
+				<div>
+					<label for="password">mon identifiant</label>
+					<input id="user" name="user" type="text" placeholder="Identifiant de connection" required>
+				</div>
+				<div>
+					<label for="password">Mon mot de passe</label>
+					<input id="password" type="password" placeholder="Mot de passe de connection" required>
+				</div>
+			</main>
 
-				<main>
-					<div>
-						<label for="password">mon identifiant</label>
-						<input id="user" name="user" type="text" placeholder="Identifiant de connection" required>
-					</div>
-					<div>
-						<label for="password">Mon mot de passe</label>
-						<input id="password" type="password" placeholder="Mot de passe de connection" required>
-					</div>
-				</main>
+			<footer>
+				<button type="submit">
+					Me connecter
+				</button>
+			</footer>
 
-				<footer>
-					<button type="submit">
-						Me connecter
-					</button>
-				</footer>
-
-				<script>
-
-					document.querySelector('#login-close').addEventListener('click', function() {
-						document.querySelector('#login').remove();
-					});
-
-					document.querySelector('#login').addEventListener('submit', function() {
-
-						event.preventDefault();
-						
-						const xhr = new XMLHttpRequest();
-
-						var user = document.querySelector('#login #user').value
-						var password = document.querySelector('#login #password').value
-
-						xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
-
-						xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-						xhr.onload = function() {
-							const response = document.createRange().createContextualFragment(this.response);
-							document.body.append(response);
-						}
-
-						xhr.send('user='+user+'&password='+password);
-
-					});
-
-				</script>
-
-			</form>
-
-			<div class="overlay"></div>
-			<?
-		}
-		else 
-		{
-			?>
 			<script>
 
-				var xhr = new XMLHttpRequest();
-				xhr.open('GET', 'lucide/ajax.php?mode=edit',true);
-				xhr.onload = function()
-				{
-					// Execute le js de la response
-					const response = document.createRange().createContextualFragment(this.response);
-					document.body.append(response);
-				}
-				xhr.send();
+				document.querySelector('#login-close').addEventListener('click', function() {
+					document.querySelector('#login').remove();
+				});
+
+				document.querySelector('#login').addEventListener('submit', function() {
+
+					event.preventDefault();
+					
+					const xhr = new XMLHttpRequest();
+
+					var user = document.querySelector('#login #user').value
+					var password = document.querySelector('#login #password').value
+
+					xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
+
+					xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+					xhr.onload = function() {
+						const response = document.createRange().createContextualFragment(this.response);
+						document.body.append(response);
+					}
+
+					xhr.send('user='+user+'&password='+password);
+
+				});
 
 			</script>
-			<?
-		}
+
+		</form>
+
+		<div class="overlay"></div>
+		<?
 	break;
 
 
