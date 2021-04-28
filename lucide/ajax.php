@@ -1,5 +1,6 @@
 <?php
-include_once("../config.php");// Les variables
+//include_once("../config.php");// Les variables
+include_once("config.init.php");// Les variables
 include_once("function.php");// Fonction
 
 $lang = get_lang();// Sélectionne  la langue
@@ -10,80 +11,80 @@ switch($_GET['mode'])
 	default:	
 	break;
 
+
 	//On affiche la popin de connection
 	case "login" :
 
 		//@todo : conditionner les mode local et online
 		
-		if(!$dev) {
-		?>
+		if(!$dev) 
+		{
+			?>			
+			<form id="login" method="POST">
 
-			
-		<form id="login" method="POST">
+				<link rel="stylesheet" href="lucide/edit.min.css">
 
-			<link rel="stylesheet" href="lucide/edit.min.css">
+				<header>
+					<i>🗝</i>
+					<div class="h3-like">Me connecter</div>
+					<a id="login-close">×</a>
+				</header>
 
-			<header>
-				<i>🗝</i>
-				<div class="h3-like">Me connecter</div>
-				<a id="login-close">×</a>
-			</header>
+				<main>
+					<div>
+						<label for="password">mon identifiant</label>
+						<input id="user" name="user" type="text" placeholder="Identifiant de connection" required>
+					</div>
+					<div>
+						<label for="password">Mon mot de passe</label>
+						<input id="password" type="password" placeholder="Mot de passe de connection" required>
+					</div>
+				</main>
 
-			<main>
-				<div>
-					<label for="password">mon identifiant</label>
-					<input id="user" name="user" type="text" placeholder="Identifiant de connection" required>
-				</div>
-				<div>
-					<label for="password">Mon mot de passe</label>
-					<input id="password" type="password" placeholder="Mot de passe de connection" required>
-				</div>
-			</main>
+				<footer>
+					<button type="submit">
+						Me connecter
+					</button>
+				</footer>
 
-			<footer>
-				<button type="submit">
-					Me connecter
-				</button>
-			</footer>
+				<script>
 
-			<script>
+					document.querySelector('#login-close').addEventListener('click', function() {
+						document.querySelector('#login').remove();
+					});
 
-				document.querySelector('#login-close').addEventListener('click', function() {
-					document.querySelector('#login').remove();
-				});
+					document.querySelector('#login').addEventListener('submit', function() {
 
-				document.querySelector('#login').addEventListener('submit', function() {
+						event.preventDefault();
+						
+						const xhr = new XMLHttpRequest();
 
-					event.preventDefault();
-					
-					const xhr = new XMLHttpRequest();
+						var user = document.querySelector('#login #user').value
+						var password = document.querySelector('#login #password').value
 
-					var user = document.querySelector('#login #user').value
-					var password = document.querySelector('#login #password').value
+						xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
 
-					xhr.open('POST', 'lucide/ajax.php?mode=signin',true);
+						xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-					xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+						xhr.onload = function() {
+							const response = document.createRange().createContextualFragment(this.response);
+							document.body.append(response);
+						}
 
-					xhr.onload = function() {
-						const response = document.createRange().createContextualFragment(this.response);
-						document.body.append(response);
-					}
+						xhr.send('user='+user+'&password='+password);
 
-					xhr.send('user='+user+'&password='+password);
+					});
 
-				});
+				</script>
 
-			</script>
+			</form>
 
-		</form>
-
-		<div class="overlay"></div>
-		
-		<?
+			<div class="overlay"></div>
+			<?
 		}
-		else {
-		?>
+		else 
+		{
+			?>
 			<script>
 
 				var xhr = new XMLHttpRequest();
@@ -97,18 +98,21 @@ switch($_GET['mode'])
 				xhr.send();
 
 			</script>
-		<?
+			<?
 		}
 	break;
+
+
 
 	// connection + chargement jquery
 	case "signin" :
 		
-		if(@$_POST['user'] && @$_POST['password']) {
-
+		if(@$_POST['user'] && @$_POST['password']) 
+		{
 			$ftp = ftp_connect($GLOBALS['ftp_server']);
 
-			if(@ftp_login($ftp, $_POST['user'], $_POST['password'])) {
+			if(@ftp_login($ftp, $_POST['user'], $_POST['password'])) 
+			{
 			?>
 				<script>
 					document.querySelector('#login').remove();
@@ -126,13 +130,14 @@ switch($_GET['mode'])
 				</script>
 				
 			<?
-			}
-			
+			}			
 		} 
 
 		ftp_close($ftp);
 
 	break;
+
+
 
 	case "edit":// Lancement du mode édition du contenu de la page
 		
@@ -147,24 +152,19 @@ switch($_GET['mode'])
 			<script>
 			reload();
 			</script>
-		<?php }
+			<?php 
+		}
 		else 
 		{				
-			// JS pour mettre en mode édit les contenus et ajout d'un nonce pour signer les formulaires
+			// Ajout d'un nonce pour signer les formulaires
 			?>
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
 			<input type="hidden" name="nonce" id="nonce" value="<?=nonce("nonce");?>">
 			
-			<link rel="stylesheet" href="<?=$GLOBALS['jquery_ui_css']?>">
-
-			<!-- Barre du haut avec bouton sauvegarder et option -->			
+			<!-- Barre d'administration avec bouton sauvegarder et option -->
 			<div id="admin-bar" class="none">
-
-				<div id="user" class="fl pat"><i class="fa fa-fw fa-user-circle bigger" title="<?php _e("Show user info")?>"></i></div>
 				
 				<!-- list/bars -->
-				<div id="list-content" class="fl pat"><i class="fa fa-menu vam" title="<?php _e("List of contents")?>"></i></div>
+				<!-- <div id="list-content" class="fl pat"><i class="fa fa-menu vam" title="<?php _e("List of contents")?>"></i></div> -->
 
 				<div id="meta-responsive" class="fl mat none small-screen"><i class="fa fa-fw fa-pencil bigger" title="<?php _e("Page title")?>"></i></div>
 
@@ -245,65 +245,82 @@ switch($_GET['mode'])
 
 				</div>		
 
+
 				<div id="close" class="fr mrt bigger" title="<?php _e("Close the edit mode")?>"><i class="fa fa-fw fa-cancel vatt"></i></div>
+
 
 				<button id="save" class="fr mat small" title="<?php _e("Save")?>"><span class="no-small-screen"><?php _e("Save")?></span> <i class="fa fa-fw fa-floppy big"></i></button>
 
+
 				<button id="del" class="fr mat small o50 ho1 t5" title="<?php _e("Delete")?>"><span class="no-small-screen"><?php _e("Delete")?></span> <i class="fa fa-fw fa-trash big"></i></button>
+
 
 				<div class="fr mat mrs switch o50 ho1 t5"><input type="checkbox" id="state-content" class="none"><label for="state-content" title="<?php _e("Activation status")?>"><i></i></label></div>
 
+
 			</div>
+
+
 			<div id="progress"></div>
 
 
-
 			<script>				
-				// Update les nonces dans la page courante pour éviter de perdre le nonce
-				$("#nonce").val('<?=$_SESSION['nonce']?>');
+				// Chargement de JQuery
+				var script = document.createElement('script');
+				script.src = 'lucide/jquery-3.6.0.min.js';
 
-				// Warnings des poids des images pour suggérer des optimisations
-				<?=(isset($GLOBALS['img_green'])? 'img_green = '.$GLOBALS['img_green'].';':'')?>
-				<?=(isset($GLOBALS['img_warning'])? 'img_warning = '.$GLOBALS['img_warning'].';':'')?>
-				<?=(isset($GLOBALS['imgs_green'])? 'imgs_green = '.$GLOBALS['imgs_green'].';':'')?>
-				<?=(isset($GLOBALS['imgs_warning'])? 'imgs_warning = '.$GLOBALS['imgs_warning'].';':'')?>
-				<?=(isset($GLOBALS['imgs_num'])? 'imgs_num = '.$GLOBALS['imgs_num'].';':'')?>
+				var head = document.getElementsByTagName('head')[0],
+				done = false;
 
-				<?php 
-				// Outil dispo dans la toolbox pour les contenus
-				if($GLOBALS['toolbox'])
-				foreach($GLOBALS['toolbox'] as $cle => $val) { echo'toolbox_'.$val.' = true;'; }
-				?>
-			
-				// Chargement de Jquery UI
-				$.ajax({
-			        url: "<?=$GLOBALS['jquery_ui']?>",
-			        dataType: 'script',
-			        cache: true,
-					success: function()
-					{ 		
+				script.onload = script.onreadystatechange = function() 
+				{
+					if(!done && (!this.readyState || this.readyState == 'loaded' || this.readyState == 'complete'))
+					{
+						// Clean les variables
+						done = true;
+						//script.onload = script.onreadystatechange = null;
+						//head.removeChild(script);
+
+
+						// JQUERY EST CHARGÉ
+
+						// Update les nonces dans la page courante pour éviter de perdre le nonce
+						$("#nonce").val('<?=$_SESSION['nonce']?>');
+
+						// Warnings des poids des images pour suggérer des optimisations
+						<?=(isset($GLOBALS['img_green'])? 'img_green = '.$GLOBALS['img_green'].';':'')?>
+						<?=(isset($GLOBALS['img_warning'])? 'img_warning = '.$GLOBALS['img_warning'].';':'')?>
+						<?=(isset($GLOBALS['imgs_green'])? 'imgs_green = '.$GLOBALS['imgs_green'].';':'')?>
+						<?=(isset($GLOBALS['imgs_warning'])? 'imgs_warning = '.$GLOBALS['imgs_warning'].';':'')?>
+						<?=(isset($GLOBALS['imgs_num'])? 'imgs_num = '.$GLOBALS['imgs_num'].';':'')?>
+
+						<?php 
+						// Outil dispo dans la toolbox pour les contenus
+						if($GLOBALS['toolbox'])
+						foreach($GLOBALS['toolbox'] as $cle => $val) { echo'toolbox_'.$val.' = true;'; }
+						?>
+
 						// Chargement de la css d'edition		
-						$("body").append("<link rel='stylesheet' href='<?=$GLOBALS['path']?>api/lucide.css'>");
+						$("body").append("<link rel='stylesheet' href='<?=$GLOBALS['path']?>lucide/edit.css'>");
 						
 						// Affichage de la barre d'admin
 						$("#admin-bar").show();				
 
-						// Ajoute la marge haute
-						$("body").addClass("body-margin-top");
-
-						// Si Jquery UI bien charger on charge la lib qui rend le contenu éditable		
+						// Si JQuery bien charger on charge la lib qui rend le contenu éditable		
 						var script = document.createElement('script');
-						script.src = path+"api/lucide.edit.js?<?=$GLOBALS['cache']?>";
-						document.body.appendChild(script);		
+						script.src = "<?=$GLOBALS['path']?>lucide/edit.js?<?=$GLOBALS['cache']?>";
+						document.body.appendChild(script);
+					}
+				}
 
-					},
-			        async: true
-			    });				
+				head.appendChild(script);
+							
 			</script>
 			<?php 
 		}
 
 	break;
+
 
 
 	case "add-content":// Dialog pour ajouter une page
