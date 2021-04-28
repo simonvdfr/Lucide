@@ -150,10 +150,10 @@ body { transition: margin-top .2s linear; }
 	z-index: 12;
 
 	transition: background-color .3s linear;
-	animation: slide-down .3s 1 ease-out;
+	animation: slide-up .3s 1 ease-out;
 }
-	@keyframes slide-down {
-	    0% { transform: translate3d(0, -100%, 0); }
+	@keyframes slide-up {
+	    0% { transform: translate3d(0, 100%, 0); }
 	    100% { transform: translateY(0, 0, 0); }
 	}
 
