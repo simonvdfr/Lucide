@@ -145,7 +145,7 @@ body { transition: margin-top .2s linear; }
 	font-family: Arial;
 
 	position: fixed;
-	bottom: 0;
+	top: 0;
 	width: 100%;
 	z-index: 12;
 
