@@ -101,8 +101,6 @@ $add_translation = array(
 	"Delete" => array("fr" => "Supprimer"),
 
 
-	"Show user info" => array("fr" => "Voir les infos utilisateur"),
-
 	"Register" => array("fr" => "S'inscrire"),
 	"Account created" => array("fr" => "Compte créé"),
 	"User deleted" => array("fr" => "Utilisateur supprimé"),
