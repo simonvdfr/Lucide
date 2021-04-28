@@ -1,5 +1,35 @@
 // @todo: mettre une barre loading et readonly qd save
 
+// Obtenir le contenu d'un cookie
+get_cookie = function(key) {
+	var value = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+	return value ? value[2] : '';
+}
+
+// Traduction
+translation = {
+	"" : {"fr" : ""},
+	"Edit the content of the page" : {"fr" : "Modifier le contenu de la page"},
+	"Add content" : {"fr" : "Ajouter un contenu"},
+	"Back to Top" : {"fr" : "Retour en haut"},
+	"Error" : {"fr" : "Erreur"},
+	"Activation status" : {"fr" : "Etat d'activation"},
+	"Active" : {"fr" : "Actif"},
+	"Deactivate" : {"fr" : "Désactivé"},
+}
+
+// Fonction d'ajout d'une liste de traduction
+add_translation = function(new_translation) {
+	Object.keys(new_translation).forEach(function(i){
+		translation[i] = new_translation[i]; 
+		translation[i.toLowerCase()] = new_translation[i];// Lowercase les index de traduction
+	});
+}
+
+// Ajoute la traduction courante
+add_translation(translation);
+
+
 // Traduction
 add_translation({
 	"Save" : {"fr" : "Enregistrer"},
@@ -54,11 +84,24 @@ add_translation({
 });
 
 
+// Traduit un texte
+__ = function(txt) {	
+	if(typeof txt == 'object') {// Si l'argument txt est un tableau de traduction
+		add_translation(txt);// On ajoute la traduction
+		var txt = Object.keys(txt)[0];// On met la clé dans la variable
+	}
+
+	if(typeof translation[txt] !== 'undefined' && translation[txt][get_cookie('lang')]) 
+		return translation[txt][get_cookie('lang')];	
+	else 
+		return txt;
+}
+
+
 // Type de navigateur
 $.browser = {};
 $.browser.mozilla = /mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase());
 $.browser.webkit = /webkit/.test(navigator.userAgent.toLowerCase());
-$.browser.opera = /opera/.test(navigator.userAgent.toLowerCase());
 $.browser.msie = /msie/.test(navigator.userAgent.toLowerCase());
 
 
@@ -80,12 +123,12 @@ get_content = function(content)
 	});
 	
 	// Contenu des images éditables
-	$(document).find(content+" .editable-media:not(.global) img").each(function() {
-		if($(this).attr("src")) data[content_array][$(this).closest(".editable-media").attr("id")] = $(this).attr("src");
+	$(document).find(content+" img.editable:not(.global) img").each(function() {
+		if($(this).attr("src")) data[content_array][$(this).closest("img.editable").attr("id")] = $(this).attr("src");
 	});
 
 	// Contenu des fichiers éditables
-	$(document).find(content+" .editable-media .fa").each(function() {
+	$(document).find(content+" img.editable .fa").each(function() {
 		if($(this).attr("title")) data[content_array][$(this).closest("span").attr("id")] = $(this).attr("title");
 	});
 	
@@ -174,8 +217,8 @@ save = function() //callback
 		if($(this).html()) data["global"][this.id] = $(this).html();					
 	});
 	// Image
-	$(document).find(".content .editable-media.global img").each(function() {
-		if($(this).attr("src")) data["global"][$(this).closest(".editable-media").attr("id")] = $(this).attr("src");
+	$(document).find(".content img.editable.global img").each(function() {
+		if($(this).attr("src")) data["global"][$(this).closest("img.editable").attr("id")] = $(this).attr("src");
 	});
 	// BG
 	$(document).find(".content [data-bg][data-global]").each(function() {
@@ -1149,7 +1192,7 @@ img_check = function(file)
 	host = location.protocol +'//'+ location.host + path;
 
 	// Contenu des images éditables, bg et dans les contenus textuels
-	$(document).find("main .editable-media img, main .editable img, main [data-bg]").each(function()
+	$(document).find("main img.editable, main .editable img, main [data-bg]").each(function()
 	{
 		if($(this).hasClass("editable-bg")) {// Image en background
 			var src = $(this).attr("data-bg").replace(host, "");
@@ -1323,7 +1366,7 @@ $(function()
 	$("#admin-bar #permalink").val(permalink);
 	$("#admin-bar #type").val(type);
 	$("#admin-bar #tpl").val(tpl);
-	$("#admin-bar #date-insert").val($("meta[property='article:published_time']").last().attr("content").slice(0, 19).replace('T', ' ')).datepicker({dateFormat: 'yy-mm-dd 00:00:00', firstDay: 1});
+	//$("#admin-bar #date-insert").val($("meta[property='article:published_time']").last().attr("content").slice(0, 19).replace('T', ' ')).datepicker({dateFormat: 'yy-mm-dd 00:00:00', firstDay: 1});
 
 
 	// Checkbox homepage si c'est une page
@@ -1365,8 +1408,8 @@ $(function()
 	}
 
 	// Ajout de l'état de la page
-	if(state == "deactivate") $("#admin-bar #state-content").prop("checked", false);
-	else $("#admin-bar #state-content").prop("checked", true);
+	//if(state == "deactivate") $("#admin-bar #state-content").prop("checked", false);
+	//else $("#admin-bar #state-content").prop("checked", true);
 
 	// Ouverture de l'édition du title si en mode responsive
 	$("#meta-responsive i").on("click",	function() {
@@ -1434,7 +1477,7 @@ $(function()
 
 
 	/************** MENU NAV **************/
-	
+/*
 	// Bloc d'option pour le menu de navigation  class='black'
 	addnav = "<div id='add-nav'>";
 		addnav+= "<div class='zone bt' title='"+ __("Edit menu") +"'><i class='fa fa-fw fa-pencil bigger vam'></i></div>";
@@ -1645,7 +1688,7 @@ $(function()
 			}
 		}
 	});
-
+*/
 
 
 	/************** TOOLBOX **************/
@@ -1772,7 +1815,7 @@ $(function()
 				}
 			},
 			"dragstart.editable": function() {// Pour éviter les interférences avec les drag&drop d'image dans les champs images
-				$("body").off(".editable-media");// Désactive les events image
+				$("body").off("img.editable");// Désactive les events image
 				$("#img-tool").remove();// Supprime la barre d'outil image
 			},
 			"dragend.editable": function() {// drop dragend
@@ -2077,18 +2120,18 @@ $(function()
 		$("body")
 			.on({
 				// Highlight les zone on hover dragover/dragenter
-				"dragover.editable-media": function(event) {
+				"dragover img.editable": function(event) {
 					event.stopPropagation();
 					$(".editable").off();// Désactive les events sur les contenu éditables
-					$(".editable-media").addClass("drag-zone");
-					$(".editable-media img, .editable-media i").addClass("drag-elem");
+					$("img.editable").addClass("drag-zone");
+					$("img.editable").addClass("drag-elem");
 				},
 				// Clean les highlight on out
-				"dragleave.editable-media": function(event) {
+				"dragleave img.editable": function(event) {
 					event.stopPropagation();
 					editable_event();// Active les events sur les contenus éditables
-					$(".editable-media").removeClass("drag-zone");
-					$(".editable-media img, .editable-media i").removeClass("drag-elem");
+					$("img.editable").removeClass("drag-zone");
+					$("img.editable").removeClass("drag-elem");
 				}
 			});
 	}
@@ -2099,7 +2142,7 @@ $(function()
 
 
 	// Icone d'upload + supp du fichier + alt éditable
-	$(".editable-media").append(function() {
+	$("img.editable").append(function() {
 		var alt = $('img', this).attr("alt");
 		return "<input type='text' placeholder=\""+ __("Image caption") +"\" class='editable-alt' id='"+ $(this).attr("id") +"-alt' value=\""+ (alt != undefined ? alt : '') +"\">" +
 			"<div class='open-dialog-media' title='"+__("Upload file")+"'><i class='fa fa-upload bigger'></i> "+__("Upload file")+"</div>" + 
@@ -2109,24 +2152,24 @@ $(function()
 
 	// Rends éditables les images/fichiers
 	editable_media_event = function() {
-		$(".editable-media")
+		$("img.editable")
 			.on({
 				// Highlight la zone on hover
-				"dragover.editable-media": function(event) {
+				"dragover img.editable": function(event) {
 					event.preventDefault();  
 					event.stopPropagation();
 					$(this).addClass("drag-over");
 					$("img, i", this).addClass("drag-elem");
 				},
 				// Clean le highlight on out
-				"dragleave.editable-media": function(event) {
+				"dragleave img.editable": function(event) {
 					event.preventDefault();  
 					event.stopPropagation();
 					$(this).removeClass("drag-over");
 					$("img, i", this).removeClass("drag-elem");
 				},
 				// On lache un fichier sur la zone
-				"drop.editable-media": function(event) {
+				"drop img.editable": function(event) {
 					event.preventDefault();  
 					event.stopPropagation();
 					$(this).removeClass("drag-over");
@@ -2136,7 +2179,7 @@ $(function()
 					if(event.originalEvent.dataTransfer) upload($(this), event.originalEvent.dataTransfer.files[0], $(this).hasClass('crop') ? 'crop':true);
 				},
 				// Hover zone upload	
-				"mouseenter.editable-media": function(event) {
+				"mouseenter img.editable": function(event) {
 					$(this).addClass("drag-over");
 					$("img, i", this).addClass("drag-elem");
 					$(".open-dialog-media", this).fadeIn("fast");
@@ -2158,7 +2201,7 @@ $(function()
 					}
 				},
 				// Out
-				"mouseleave.editable-media": function(event) {
+				"mouseleave img.editable": function(event) {
 					$(this).removeClass("drag-over");
 					$("img, i", this).removeClass("drag-elem");
 					$(".open-dialog-media", this).hide();
@@ -2168,7 +2211,7 @@ $(function()
 					$('#'+ $(this).attr("id") +'-alt').css('display','none');;
 				},
 				// Ouverture de la fenêtre des médias
-				"click.editable-media": function(event) {
+				"click img.editable": function(event) {
 					// Suppression
 					if($(event.target).hasClass("clear-file")){
 						if($("img", this).attr("src")) $("img", this).attr("src","");// Supp img src
@@ -2255,7 +2298,7 @@ $(function()
 
 		// On regarde qu'elle type d’élément éditable existe pour récupérer l'id le plus grand
 		if($("#" + module + " li .editable").length) var elem = $("#" + module + " li .editable");
-		else if($("#" + module + " li .editable-media").length) var elem = $("#" + module + " li .editable-media");
+		else if($("#" + module + " li img.editable").length) var elem = $("#" + module + " li img.editable");
 
 		// Crée un id unique (dernier id le plus grand + 1)
 		//key = parseInt($("#" + module + " li:first-child .editable").attr("id").split("-").pop()) + 1; Ne tien pas compte de l'ordre des id
@@ -2267,7 +2310,7 @@ $(function()
 
 		// Unbind les events d'edition
 		$(".editable").off();
-		$(".editable-media").off(".editable-media");
+		$("img.editable").off("img.editable");
 		$(".editable-href").off(".editable-href");
 
 		// Crée un block
@@ -2298,7 +2341,7 @@ $(function()
 		$(".module-bt .fa-move").css("transform","scale(.5)");
 
 		// Désactive l'edition
-		$(".editable-media").off(".editable-media");
+		$("img.editable").off("img.editable");
 		$(".editable").off();
 
 		// Change l'action sur le lien 'move'
@@ -2377,7 +2420,7 @@ $(function()
 	$(".editable-select.none").show();
 
 	$(".editable-tag.none").slideDown();
-	$(".editable-media .none").show();
+	$("img.editable .none").show();
 	$(".editable-hidden").slideDown();
 	$("label.none").slideDown();
 
@@ -2477,7 +2520,7 @@ $(function()
     
 
 	/************** SYSTÈME DE TAG / CATÉGORIE **************/
-
+/*
 	// Si champs tag
 	if($(".editable-tag").length) 
 	{
@@ -2584,10 +2627,10 @@ $(function()
 			$(this).autocomplete("search", "");
 		});
 	}
-
+*/
 
 	/************** LISTE DES CONTENUS **************/
-
+/*
 	// Ouverture de la liste des contenus
 	$("#list-content i").on("click",
 		function(event) {
@@ -2614,10 +2657,10 @@ $(function()
 		    });
 		}
 	);
-
+*/
 
 	/************** USERS **************/
-
+/*
 	// Ouverture de l'admin des users
 	$("#user i").on("click mouseenter",	// touchstart
 		function(event) {
@@ -2665,9 +2708,10 @@ $(function()
 			}
 		}
 	);
-
+*/
 
 	/************** EXECUTION DES FONCTIONS D'EDITION DES PLUGINS **************/
+	if(typeof edit !== 'undefined')
 	$(edit).each(function(key, funct){
 		funct();
 	});
@@ -2687,7 +2731,7 @@ $(function()
 		medias = {};
 
 		// Contenu des images éditables, bg et dans les contenus textuels
-		$(document).find(".content .editable-media img, .content .editable img, .content [data-bg]").each(function() {
+		$(document).find(".content img.editable, .content .editable img, .content [data-bg]").each(function() {
 			if($(this).hasClass("editable-bg")) var media = $(this).attr("data-bg");
 			else var media = $(this).attr("src");
 
@@ -2695,7 +2739,7 @@ $(function()
 		});
 
 		// Contenu des fichiers éditables et dans les contenus textuels
-		$(document).find(".content .editable-media .fa, .content .editable a[href^='media/']").each(function() {
+		$(document).find(".content img.editable .fa, .content .editable a[href^='media/']").each(function() {
 			if($(this).closest("span").hasClass("editable-media")) var media = $(this).attr("title");
 			else var media = $(this).attr("href");
 
