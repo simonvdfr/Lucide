@@ -149,7 +149,7 @@ header #burger-content {
 	}
 
 /* edit */
-#lucide, #top {
+#lucide/* , #top */ {
 	position: fixed;
     cursor: pointer;
 	font-size: .7em;
@@ -169,7 +169,7 @@ header #burger-content {
 		transition: all .3s;
 		margin-bottom: .5rem;
 	}
-#top {bottom: 10px; right: 10px;}
+/* #top {bottom: 10px; right: 10px;}
 	#top::before {
 		content:'⏶';
 		display: block;
@@ -178,7 +178,7 @@ header #burger-content {
 		line-height: 1;
 		transition: all .3s;
 		margin-bottom: .5rem;
-	}
+	} */
 
 
 
