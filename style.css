@@ -148,9 +148,12 @@ header #burger-content {
 		left: 0;
 	}
 
+
 /* edit */
-#lucide/* , #top */ {
+.bt.edit {
 	position: fixed;
+	bottom: 10px;
+	left: 10px;
     cursor: pointer;
 	font-size: .7em;
 	font-weight: bold;
@@ -158,9 +161,10 @@ header #burger-content {
 	text-align: center;
 	margin-right: 1rem;
 	z-index: 5;
+	opacity: .5;
 }
-#lucide {bottom: 10px; left: 10px;}
-	#lucide::before {
+.bt.edit:hover { opacity: 1; }
+	.bt.edit::before {
 		content:'✎';
 		display: block;
 		font-size: 2.3rem;
@@ -169,16 +173,6 @@ header #burger-content {
 		transition: all .3s;
 		margin-bottom: .5rem;
 	}
-/* #top {bottom: 10px; right: 10px;}
-	#top::before {
-		content:'⏶';
-		display: block;
-		font-size: 2.3rem;
-		font-weight: normal;
-		line-height: 1;
-		transition: all .3s;
-		margin-bottom: .5rem;
-	} */
 
 
 
@@ -395,19 +389,3 @@ img.fl, img.fr { margin-bottom: 0.5rem; }
 
 	transition: all .3s;
 }
-	.bt:focus, input[type="button"]:focus, button:focus {
-	  -webkit-tap-highlight-color: transparent;
-	  -webkit-user-select: none;
-	  -moz-user-select: none;
-	  -ms-user-select: none;
-	  user-select: none;
-	}
-	.bt:hover, button:hover {
-		text-decoration: none;
-		box-shadow: none;
-	}
-		.bt a:hover { color: #fff; }
-	.bt:active, button:active { 
-		box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2) inset, 0 100px 0 rgba(0, 0, 0, 0.1) inset;
-	}
-

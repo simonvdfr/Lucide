@@ -99,9 +99,9 @@
 
 
     <!-- plugin d'édition de contenu -->
-    <a id="lucide" class="bt">Editer</a>
+    <a class="bt edit">Editer</a>
     <script>
-        document.querySelector('#lucide.bt').addEventListener('click', function() {	
+        document.querySelector('.bt.edit').addEventListener('click', function() {	
             var xhr = new XMLHttpRequest();
             xhr.open('GET', 'lucide/ajax.php?mode=login',true);
             xhr.onload = function()
