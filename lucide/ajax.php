@@ -22,7 +22,7 @@ switch($_GET['mode'])
 		?>			
 		<form id="login" method="POST">
 
-			<link rel="stylesheet" href="lucide/edit.min.css">
+			<link rel="stylesheet" href="lucide/edit.css">
 
 			<header>
 				<i>🗝</i>
@@ -227,16 +227,10 @@ switch($_GET['mode'])
 				</div>		
 
 
-				<div id="close" class="fr mrt bigger" title="<?php _e("Close the edit mode")?>"><i class="fa fa-fw fa-cancel vatt"></i></div>
+				<div id="close" class="fr mrt big" title="<?php _e("Close the edit mode")?>"><i class="fa fa-fw fa-cancel vatt"></i></div>
 
 
 				<button id="save" class="fr mat small" title="<?php _e("Save")?>"><span class="no-small-screen"><?php _e("Save")?></span> <i class="fa fa-fw fa-floppy big"></i></button>
-
-
-				<button id="del" class="fr mat small o50 ho1 t5" title="<?php _e("Delete")?>"><span class="no-small-screen"><?php _e("Delete")?></span> <i class="fa fa-fw fa-trash big"></i></button>
-
-
-				<div class="fr mat mrs switch o50 ho1 t5"><input type="checkbox" id="state-content" class="none"><label for="state-content" title="<?php _e("Activation status")?>"><i></i></label></div>
 
 
 			</div>
@@ -1159,7 +1153,7 @@ switch($_GET['mode'])
 
 					container += "<div class='infos'></div>";
 
-					container += "<a class='supp hidden' title=\""+__("Delete file")+"\"><i class='fa fa-fw fa-trash bigger'></i></a>";
+					container += "<a class='supp hidden' title=\""+__("Delete")+"\"><i class='fa fa-fw fa-trash bigger'></i></a>";
 
 				container += "</li>";
 
@@ -1260,7 +1254,7 @@ switch($_GET['mode'])
 				{
 					event.stopPropagation();
 
-					if(confirm(__("Delete file")+" ?")) 
+					if(confirm(__("Delete")+" ?")) 
 					{
 						var id = $(this).parent().attr("id");
 						
@@ -1620,7 +1614,7 @@ switch($_GET['mode'])
 						echo"						
 						<div class='mime ".$sizecolor."'>".$val['mime']."</div>
 						<div class='infos'>".$info." - ".$size."</div>
-						<a class='supp' title=\"".__("Delete file")."\"><i class='fa fa-fw fa-trash bigger'></i></a>
+						<a class='supp' title=\"".__("Delete")."\"><i class='fa fa-fw fa-trash bigger'></i></a>
 					</li>";
 					
 					$i++;
