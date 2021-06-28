@@ -9,7 +9,9 @@ $.browser.msie = /msie/.test(navigator.userAgent.toLowerCase());
 
 
 /************** LANGUE **************/
-lang = 'en';
+lang = $("html").attr("lang");
+if(!lang) lang = 'en';
+
 translation = {};
 
 // Fonction d'ajout d'une liste de traduction
