@@ -1,22 +1,16 @@
 // @todo: mettre une barre loading et readonly qd save
 
-// Obtenir le contenu d'un cookie
-get_cookie = function(key) {
-	var value = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
-	return value ? value[2] : '';
-}
 
-// Traduction
-translation = {
-	"" : {"fr" : ""},
-	"Edit the content of the page" : {"fr" : "Modifier le contenu de la page"},
-	"Add content" : {"fr" : "Ajouter un contenu"},
-	"Back to Top" : {"fr" : "Retour en haut"},
-	"Error" : {"fr" : "Erreur"},
-	"Activation status" : {"fr" : "Etat d'activation"},
-	"Active" : {"fr" : "Actif"},
-	"Deactivate" : {"fr" : "Désactivé"},
-}
+// Type de navigateur
+$.browser = {};
+$.browser.mozilla = /mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase());
+$.browser.webkit = /webkit/.test(navigator.userAgent.toLowerCase());
+$.browser.msie = /msie/.test(navigator.userAgent.toLowerCase());
+
+
+/************** LANGUE **************/
+lang = 'en';
+translation = {};
 
 // Fonction d'ajout d'une liste de traduction
 add_translation = function(new_translation) {
@@ -26,27 +20,17 @@ add_translation = function(new_translation) {
 	});
 }
 
-// Ajoute la traduction courante
-add_translation(translation);
-
-
 // Traduction
 add_translation({
-	"Save" : {"fr" : "Enregistrer"},
-	"Delete" : {"fr" : "Supprimer"},
-	"Delete the page" : {"fr" : "Supprimer la page"},
-	"Also remove media from content" : {"fr" : "Supprimer également les médias présents dans le contenu"},
-	"The changes are not saved" : {"fr" : "Les modifications ne sont pas enregistrées"},
-	"Cancel" : {"fr" : "Annuler"},	
+	"Error" : {"fr" : "Erreur"},
 
-	"Empty element" : {"fr" : "Elément vide"},		
-	"Edit menu" : {"fr" : "Editer le menu"},		
-	"To remove slide here" : {"fr" : "Pour supprimer glisser ici"},		
+	"Save" : {"fr" : "Enregistrer"},
+	"The changes are not saved" : {"fr" : "Les modifications ne sont pas enregistrées"},
+
 	"Paste something..." : {"fr" : "Collez quelque chose..."},
 	"Upload file" : {"fr" : "Télécharger un fichier"},
 	"Change the background image" : {"fr" : "Changer l'image de fond"},
 	"This file format is not supported" : {"fr" : "Ce format de fichier n'est pas pris en charge"},	
-	"Delete user" : {"fr" : "Supprimer l'utilisateur"},
 	"Title" : {"fr" : "Titre"},	
 	"Media Library" : {"fr" : "Bibliothèque des médias"},		
 	"Icon Library" : {"fr" : "Bibliothèque d'icône"},		
@@ -62,9 +46,7 @@ add_translation({
 
 	"Remove the link from the selection" : {"fr" : "Supprimer le lien de la sélection"},
 	"Image caption" : {"fr" : "Légende de l'image"},		
-	"Delete image" : {"fr" : "Supprimer l'image"},		
-	"Delete file" : {"fr" : "Supprimer le fichier"},
-	"Zoom link" : {"fr" : "Lien zoom"},
+	"Delete" : {"fr" : "Supprimer"},		
 	"Add" : {"fr" : "Ajouter"},
 	"Width" : {"fr" : "Largeur"},
 	"Height" : {"fr" : "Hauteur"},
@@ -83,7 +65,6 @@ add_translation({
 	"Background" : {"fr" : "Fond"},
 });
 
-
 // Traduit un texte
 __ = function(txt) {	
 	if(typeof txt == 'object') {// Si l'argument txt est un tableau de traduction
@@ -91,18 +72,20 @@ __ = function(txt) {
 		var txt = Object.keys(txt)[0];// On met la clé dans la variable
 	}
 
-	if(typeof translation[txt] !== 'undefined' && translation[txt][get_cookie('lang')]) 
-		return translation[txt][get_cookie('lang')];	
+	if(typeof translation[txt] !== 'undefined' && translation[txt][lang]) 
+		return translation[txt][lang];	
 	else 
 		return txt;
 }
 
 
-// Type de navigateur
-$.browser = {};
-$.browser.mozilla = /mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase());
-$.browser.webkit = /webkit/.test(navigator.userAgent.toLowerCase());
-$.browser.msie = /msie/.test(navigator.userAgent.toLowerCase());
+
+/************** FONCTIONS DE SAUVEGARDE **************/
+
+// Url en cours nettoyé
+clean_url = function() {
+	return location.protocol +'//'+ location.host + location.pathname + location.search;
+}
 
 
 // Rapatrie le contenu
@@ -114,7 +97,7 @@ get_content = function(content)
 	data[content_array] = {};
 
 	// Contenu des champs éditables
-	$(document).find(content+" .editable:not(.global)").not("header nav .editable").each(function() {
+	$(document).find(content+" .editable").each(function() {
 		// Si on est en mode pour voir le code source
 		if($(this).hasClass("view-source")) var content_editable = $(this).text();
 		else var content_editable = $(this).html();
@@ -123,17 +106,12 @@ get_content = function(content)
 	});
 	
 	// Contenu des images éditables
-	$(document).find(content+" img.editable:not(.global) img").each(function() {
+	$(document).find(content+" img.editable").each(function() {
 		if($(this).attr("src")) data[content_array][$(this).closest("img.editable").attr("id")] = $(this).attr("src");
-	});
-
-	// Contenu des fichiers éditables
-	$(document).find(content+" img.editable .fa").each(function() {
-		if($(this).attr("title")) data[content_array][$(this).closest("span").attr("id")] = $(this).attr("title");
 	});
 	
 	// Contenu des background images éditables
-	$(document).find(content+" [data-bg]:not([data-global]), "+content+"[data-bg]").each(function() {
+	$(document).find(content+" [data-bg]").each(function() {
 		if($(this).attr("data-bg")) data[content_array][$(this).attr("data-id")] = $(this).attr("data-bg");
 	});
 		
@@ -168,8 +146,6 @@ save = function() //callback
 	
 	data["nonce"] = $("#nonce").val();// Pour la signature du formulaire
 
-	data["id"] = id;// id de la page courante
-
 	data["url"] = clean_url();// Url de la page en cours d'édition
 
 	data["permalink"] = $("#admin-bar #permalink").val();// Permalink
@@ -177,11 +153,9 @@ save = function() //callback
 	data["title"] = $("#admin-bar #title").val();// Titre de la page
 	data["description"] = $("#admin-bar #description").val();// Description pour les serp
 
-	data["state"] = ($("#admin-bar #state-content").prop("checked") == true ? "active" : "deactivate");// Etat d'activation de la page
+	//data["type"] = $("#admin-bar #type").val();// Type de contenu
 
-	data["type"] = $("#admin-bar #type").val();// Type de contenu
-
-	data["tpl"] = $("#admin-bar #tpl").val();// Template
+	//data["tpl"] = $("#admin-bar #tpl").val();// Template
 
 	// Robots 
 	if($("#admin-bar #noindex").prop("checked")) data["robots"] = "noindex";
@@ -194,80 +168,11 @@ save = function() //callback
 	data["date-insert"] = $("#admin-bar #date-insert").val();// Date de création de la page
 	
 
-	get_content(".content");// Contenu de la page
-
-	get_content("header");// Contenu du header
-
-	get_content("footer");// Contenu du footer
-
-
-	// Donnée Méta
-	data["meta"] = {};
-	$(document).find(".content .editable-input.meta").each(function() {
-		data["meta"][this.id] = $(this).val();// if($(this).val()) 		
-	});
-	$(document).find(".content .editable.meta").each(function() {
-		if($(this).html()) data["meta"][this.id] = $(this).html();					
-	});
-
-	// Donnée global commune à plusieur page
-	data["global"] = {};
-	// Texte
-	$(document).find(".content .editable.global").each(function() {
-		if($(this).html()) data["global"][this.id] = $(this).html();					
-	});
-	// Image
-	$(document).find(".content img.editable.global img").each(function() {
-		if($(this).attr("src")) data["global"][$(this).closest("img.editable").attr("id")] = $(this).attr("src");
-	});
-	// BG
-	$(document).find(".content [data-bg][data-global]").each(function() {
-		if($(this).attr("data-bg")) data["global"][$(this).attr("data-id")] = $(this).attr("data-bg");
-	});
-
-
-	// Tags de la fiche en cours
-	data["tag"] = {};
-	$(document).find(".content .editable-tag").each(function() {
-		if($(this).text()) data["tag"][$(this).attr("id")] = $(this).text();
-	});	
-
-	// Séparateur de tag
-	data["tag-separator"] = $(".editable-tag").data("separator");
-
-
-	// Si sur page tag
-	if(tag) 
-	{
-		// Ajoute les données prise dans le contenu
-		data["tag-info"] = {};
-		data["tag-info"]["title"] = data["tag"] = data["content"]["title"];
-		data["tag-info"]["description"] = data["content"]["description"];
-		data["tag-info"]["img"] = data["content"]["img"];
-	}
+	get_content("body");// Contenu de la page
 
 
 	if($("#admin-bar #og-image img").attr("src"))
 	data["content"]["og-image"] = $("#admin-bar #og-image img").attr("src");// Image pour les réseaux sociaux
-	
-
-	//@todo voir pourquoi ça ne supp pas de la nav quand on glisse sur poubelle un element du menu
-	// Contenu du menu de navigation
-	data["nav"] = {};
-	//$(document).find("header nav ul li").not("#add-nav ul li, .exclude").each(function(i) {
-	$(document).find("header nav ul li a").not("#add-nav ul li a, .exclude").each(function(index, element) {
-		//$("a", this).each(function(index, element) {
-			//data["nav"][i+'-'+index] = {
-			data["nav"][index] = {
-				href : $.trim($(this).attr('href')),
-				text : ($(this).hasClass("view-source")?$(this).text():$(this).html()),
-				id : $(this).attr('id') || "",
-				class : $(this).attr('class') || "",
-				target : $(this).attr('target') || "",
-				level : $(element).parents('ul').length
-			};
-		//});
-	});
 
 
 	// Fonction à exécuter avant la sauvegarde
@@ -286,9 +191,6 @@ save = function() //callback
 
 		// Fonction à exécuter après la sauvegarde
 		$(after_save).each(function(key, funct){ funct(); });
-
-		// S'il y a une fonction de retour
-		//if(typeof callback === "function") callback();//@todo voir si utilisé ?
 	})
 	.fail(function() {
 		error(__("Error"));
@@ -298,21 +200,13 @@ save = function() //callback
 
 // Changement d'état des boutons de sauvegarde
 tosave = function() {	
-	// Si site statique on check la modification du header/footer | contenu global
-	//console.log($(memo_node).closest("header")) pour les contenu éditable
-	// detecter les deplacement du menu
-	// detecter le changement de média
-
 	$("#save i").removeClass("fa-spin fa-cog").addClass("fa-floppy");// Affiche l'icône disant qu'il faut sauvegarder sur le bt save	
 	$("#save").removeClass("saved").addClass("to-save");// Changement de la couleur de fond du bouton pour indiquer qu'il faut sauvegarder
 }
 
 
-// Champs requis
-$.fn.required = function(txt){						
-	$(this).addClass("invalid").attr("title", txt).tooltip().tooltip("open").focus().effect("highlight");
-}
 
+/************** FONCTIONS DE MANIPULATION DES CONTENUS **************/
 
 // Fonctions pour catcher la sélection
 range_selects_single_node = function(range) {
@@ -348,11 +242,7 @@ exec_tool = function(command, value, ui) {
 			command = "insertHTML";
 			value = "<i class='fa'>&#x"+ value +";</i>";
 		}
-		
-		// Si alignement
-		if(/justify/.test(command)) {
-			$(memo_node).removeAttr("align").css("text-align","");
-		}
+
 
 		// Si Ajout d'une ancre
 		if(command == "CreateAnchor") { var command_source = command; command = "CreateLink"; }
@@ -365,19 +255,6 @@ exec_tool = function(command, value, ui) {
 		// A sauvegarder	
 		tosave();
 
-		// Si on justify on supprime l'éventuel span intérieur
-		if(/justify/.test(command))
-		{
-			// Désélectionne les alignements
-			$("[class*='fa-align']").parent().removeClass("checked");			
-
-			// check le bt d'alignement
-			$("#align-"+command.match(/justify(.*)/)[1].toLowerCase()).addClass("checked");
-			
-			// Si il y a un span avec des style on le supprime (chrome)
-			if($("span", $(memo_node))[0])
-				$("div", memo_node).html($("span", $(memo_node).context.innerHTML).html());
-		}
 
 		if(command_source == "CreateAnchor")
 		{
@@ -613,6 +490,8 @@ view_source = function(memo, force){
 
 
 
+/************** DIALOG **************/
+
 // Dialog box avec effet de transfert
 dialog = function(mode, source, target, callback) {
 
@@ -692,6 +571,9 @@ dialog = function(mode, source, target, callback) {
 		});
 }
 
+
+
+/************** MEDIA **************/
 
 // Ouvre la fenêtre pour ajouter une image/fichier dans la galerie des medias (intext, isolate, bg)
 media = function(source, target) {
@@ -1314,32 +1196,25 @@ img_check = function(file)
 }
 
 
-// Désactive l'edition
-unlucide = function()
-{
-	lucide = false;
 
-	$("body").removeClass("lucide");
+/************** FERMETURE ADMIN **************/
 
-	$("#admin-bar").slideUp("400", function(){ $(this).remove(); });
-	
-	$("#txt-tool").remove();
-	$("#add-nav").remove();
-	$("[contenteditable='true']").attr("contenteditable","false");
+// Recharge la page en cours
+reload = function() {
+	document.location.href = clean_url();
 }
 
 
 // Vérifie que le contenu est sauvegardé en cas d'action de fermeture ou autres
-$(window).on("beforeunload", function(){
+/*$(window).on("beforeunload", function(){
 	if($("#admin-bar button.to-save").length || $("#save i.fa-spin").length) return __("The changes are not saved");
-});
+});*/
+
 
 
 /************** ONLOAD **************/
 $(function()
-{						
-	//@todo: ajouter le choix de la langue de la page en cours
-	
+{							
 	lucide = true;
 
 	// Ajout de la class pour dire que l'on est en mode admin
@@ -1364,38 +1239,12 @@ $(function()
 
 
 	$("#admin-bar #permalink").val(permalink);
-	$("#admin-bar #type").val(type);
-	$("#admin-bar #tpl").val(tpl);
-	//$("#admin-bar #date-insert").val($("meta[property='article:published_time']").last().attr("content").slice(0, 19).replace('T', ' ')).datepicker({dateFormat: 'yy-mm-dd 00:00:00', firstDay: 1});
+	//$("#admin-bar #type").val(type);
+	//$("#admin-bar #tpl").val(tpl);
 
-
-	// Checkbox homepage si c'est une page
-	if(type == "page") $("#admin-bar #ispage").show();
-
-	// Etat de la checkbox homepage onready
-	if($("#admin-bar #permalink").val() == "index") $("#admin-bar #homepage").prop("checked", true);
-	
-	// Si on change le permalink on verif que c'est 'home'
-	$("#admin-bar #permalink").keyup(function() {
-		if($(this).val() == "index") $("#admin-bar #homepage").prop("checked", true);
-		else $("#admin-bar #homepage").prop("checked", false);
-	});
-
-	// Changement au click de la checkbox homepage
-	$("#admin-bar #homepage").change(function() {
-		if(this.checked) $("#admin-bar #permalink").val("index");
-		else refresh_permalink("#admin-bar");
-		tosave();// A sauvegarder
-	});
-
-	// Click refresh permalink
-	$("#admin-bar #refresh-permalink").click(function() {
-		refresh_permalink("#admin-bar");
-	});
 
 	// Dossier spécifique média pour l'image pour og:image
 	if($("#visuel").data('dir')) $("#admin-bar #og-image").data('dir', $("#visuel").data('dir'));
-	else if($("#alaune").data('dir')) $("#admin-bar #og-image").data('dir', $("#alaune").data('dir'));
 
 	// On récupère og:image des meta
 	if($("meta[property='og:image']").last().attr("content") != undefined) 
@@ -1407,9 +1256,6 @@ $(function()
 		$("#admin-bar #og-image").after("<a href='javascript:void(0)' onclick=\"$('#admin-bar #og-image img').attr('src','');$(this).remove();\"><i class='fa fa-cancel absolute' title='"+ __("Remove") +"'></i></a>");
 	}
 
-	// Ajout de l'état de la page
-	//if(state == "deactivate") $("#admin-bar #state-content").prop("checked", false);
-	//else $("#admin-bar #state-content").prop("checked", true);
 
 	// Ouverture de l'édition du title si en mode responsive
 	$("#meta-responsive i").on("click",	function() {
@@ -1467,229 +1313,6 @@ $(function()
 	$(".editable").parent("label").attr("for","");
 
 
-	// Rends communiquant les champs titles dans l'édition et l'admin-bar
-	$("#admin-bar #title").on("keyup", function(event){
-		$(".editable#title").html($(this).val());
-	});
-	$(".editable#title").on("keyup", function(event){
-		$("#admin-bar #title").val($(this).text());
-	});
-
-
-	/************** MENU NAV **************/
-/*
-	// Bloc d'option pour le menu de navigation  class='black'
-	addnav = "<div id='add-nav'>";
-		addnav+= "<div class='zone bt' title='"+ __("Edit menu") +"'><i class='fa fa-fw fa-pencil bigger vam'></i></div>";
-		addnav+= "<div class='tooltip none pat'>";
-			addnav+= "<i class='fa fa-cancel grey o50'></i>";
-			addnav+= "<ul class='block unstyled plm man tl'>";
-				addnav+= "<li class='add-empty'><div class='dragger'></div><a href='#'>"+__("Empty element")+"</a></li>";
-			addnav+= "</ul>";
-		addnav+= "</div>";	
-	addnav+= "</div>";	
-	$("header nav > ul").after(addnav);
-
-	// Positionne le menu
-	// Barre admin + position top du menu + marge du menu - hauteur du bt edit menu
-	var top_bt_menu = $("#admin-bar").outerHeight() + $("header nav > ul").offset().top + parseInt($("header nav > ul").css("marginTop").replace('px', '')) - ($("#add-nav").outerHeight());
-	$("#add-nav").css("top", top_bt_menu + "px");
-	
-
-	// Déplace un élément du menu add vers le menu courant au click sur le +
-	hover_add_nav = false;	
-	$("#add-nav").on({
-		"click.dragger": function(event) {
-			event.preventDefault();  
-			//event.stopPropagation();
-
-			// Si on est bien sur un élément ajoutable
-			if(event.target.className == "dragger")
-			{
-				if($(event.target).parent().hasClass("add-empty"))
-					$("header nav ul:first").append($(event.target).parent().clone());// Copie
-				else
-					$($(event.target).parent()).appendTo("header nav ul:first");// Déplace
-				
-				// Rends editable les éléments du menu (pointage sur A)
-				$("header nav ul:first li a").attr("contenteditable","true").addClass("editable");
-				editable_event();
-
-				tosave();// A sauvegarder
-					
-				// Désactive les liens dans le menu d'ajout
-				$("#add-nav ul a").click(function() { return false; });
-			}
-		},
-		// On check si on est sur le menu d'ajout de page au menu
-		"mouseenter": function(event) { hover_add_nav = true; },
-		"mouseleave": function(event) {	hover_add_nav = false; }
-	});
-	
-	// Drag & Drop des éléments du menu principal
-	$("header nav ul:first").sortable({
-		connectWith: "header nav ul, #add-nav .zone",
-		handle: ".dragger",
-		axis: "x",
-		start: function(event) {
-			$("#add-nav").addClass("del");
-			$("#add-nav .zone i").removeClass("fa-plus").addClass("fa-trash");
-
-			$(".editable").off();//$("body").off(".editable");		
-			$("header nav ul:first li a").attr("contenteditable","false").removeClass("editable");
-		},
-		stop: function(event, ui) {
-			// Si on drop l'element dans la zone de suppression mais pas dans le ul liste autre page
-			if($(event.toElement).closest("#add-nav").length && !$(event.toElement).parent("#add-nav .tooltip").length)
-				$(ui.item).remove();// On le supprime de la nav
-
-			$("#add-nav").removeClass("del");
-			$("#add-nav .zone i").removeClass("fa-trash").addClass("fa-plus");
-			
-			// Rends editable les éléments du menu
-			$("header nav ul:first li a").attr("contenteditable","true").addClass("editable");
-			editable_event();
-
-			tosave();// A sauvegarder
-			
-			// désactive les liens dans le menu d'ajout
-			$("#add-nav ul a").click(function() { return false; });
-		}
-	});
-
-	// Si on est en mode burger on active le tri verticalement
-	$(".burger, .sortable-y").click(function() {
-		$("header nav ul:first").sortable("option", "axis", "y");
-	});
-
-	// Si on demande à ce que le menu soit triable verticalement
-	if($(".sortable-y").length) $("header nav ul:first").sortable("option", "axis", "y");
-	
-	// Rend clonable uniquement le bloc vide
-	$(".add-empty").draggable({
-		connectToSortable: "header nav ul:first",
-		helper: "clone",
-		revert: "invalid"
-    });
-
-
-	// Affichage du bouton pour ouvrir le menu d'ajout
-	on_header = false;
-	add_page_bt = false;		
-	$("header").on({
-		"mouseover": function(event) {//mouseenter
-
-			on_header = true;// On est sur le header avec la souris
-
-			if(!add_page_bt)
-			{
-				// Affichage du bouton pour l'ouverture du menu d'ajout
-				$("#add-nav").css({opacity: 0, display: 'inline-block'}).animate({opacity: 0.8}, 300);
-
-				add_page_bt = true;// Bouton pour ouvrir le layer de liste de page, visible
-			}
-			else if($("#add-nav").css("display") != "block")// Si pas affiché on l'affiche
-				$("#add-nav").css({opacity: 0, display: 'inline-block'}).animate({opacity: 0.8}, 300);
-		},
-		// Si on sort du header, on check si on est sur le menu d'ajout de page avant de le fermer
-		"mouseleave": function(event) {
-			on_header = false;
-			setTimeout(function() { 
-				if(!add_page_list && !hover_add_nav && !on_header) $("#add-nav").fadeOut("fast");
-			}, 1000);			
-		}
-	});
-
-	// Ouverture de la liste des pages disponibles absente du menu au click sur le +
-    add_page_list = false;
-	$("#add-nav .zone, #add-nav .fa-cancel").on({
-		"click": function(event) {
-			event.preventDefault();  
-			//event.stopPropagation();
-
-			// Ouvre le menu d'ajout
-			// Cherche dans la base les pages manquantes
-			if(!add_page_list)
-			{
-				// Rends le menu de navigation éditable
-				// Cible le A pour eviter les bug de selection de navigateur qui sortent du lien
-				$("header nav ul:first li a").attr("contenteditable","true").addClass("editable");
-
-				// Pour la toolbox sur les éléments du menu
-				editable_event();
-
-				// Ajout d'une zone de drag pour chaque élément
-				$("header nav ul:first li").prepend("<div class='dragger'></div>");
-
-
-				// Liste les pages déjà dans le menu
-				var menu = {};
-				$(document).find("header nav ul a").each(function(index) { menu[index] = $(this).attr('href'); });
-
-				$.ajax({
-					type: "POST",
-					url: path+"api/ajax.admin.php?mode=add-nav",
-					data: {
-						"menu" : menu,
-						"nonce": $("#nonce").val()
-					},
-					success: function(html){ 
-						$("#add-nav .tooltip ul").append(html);		
-						
-						// Pour éviter de relancer l'ajax
-						add_page_list = true;
-
-						// Rends draggable les pages manquantes du menu
-						$("#add-nav .tooltip ul").sortable({
-							connectWith: "header nav ul",
-							start: function() {
-								$(".editable").off();//$("body").off(".editable");
-								$("header nav ul:first li a").attr("contenteditable","false").removeClass("editable");
-							},
-							stop: function() {
-								$("header nav ul:first li a").attr("contenteditable","true").addClass("editable");
-								editable_event();
-								tosave();// A sauvegarder
-							}
-						});
-							
-						// désactive les liens
-						$("#add-nav ul a").click(function() { return false; });
-
-						// Affichage de la liste
-						$("#add-nav .tooltip").show();//slideDown
-
-						// Changement de la class zone +
-						$("#add-nav").addClass("open");
-
-						// Ajoute la croix de suppression // $(this).parent().remove()
-						$("nav ul:first li").append("<i onclick='$(this).parent().appendTo(\"#add-nav ul\");' class='fa fa-cancel red' title='"+ __("Remove") +"'></i>");
-					}
-				});
-			}
-			else// Ferme le menu d'ajout
-			{
-				add_page_list = false;
-
-				// Affichage de la liste
-				$("#add-nav .tooltip").hide();//slideUp
-
-				// Changement de la class zone +
-				$("#add-nav").removeClass("open");
-
-				// Supprime la croix de suppression
-				$("nav ul:first .fa-cancel").remove();
-
-				// Supprime l'edition des élément du menu
-				$("header nav ul:first li a").attr("contenteditable","false").removeClass("editable").off();
-
-				// Supprime la zone de drag pour chaque élément
-				$("header nav ul:first li .dragger").remove();
-			}
-		}
-	});
-*/
-
 
 	/************** TOOLBOX **************/
 
@@ -1735,8 +1358,8 @@ $(function()
 		if(typeof toolbox_justifyRight != 'undefined') 
 			toolbox+= "<li><button onclick=\"exec_tool('justifyRight')\" id='align-right'><i class='fa fa-fw fa-align-right'></i></button></li>";
 
-		if(typeof toolbox_justifyFull != 'undefined') 
-			toolbox+= "<li><button onclick=\"exec_tool('justifyFull')\" id='align-justify'><i class='fa fa-fw fa-align-justify'></i></button></li>";
+		/*if(typeof toolbox_justifyFull != 'undefined') 
+			toolbox+= "<li><button onclick=\"exec_tool('justifyFull')\" id='align-justify'><i class='fa fa-fw fa-align-justify'></i></button></li>";*/
 
 		if(typeof toolbox_InsertHorizontalRule != 'undefined') 
 			toolbox+= "<li><button onclick=\"exec_tool('InsertHorizontalRule')\" title=\""+__("Ajoute une barre de s\u00e9paration")+"\"><i class='fa fa-fw fa-resize-horizontal'></i></button></li>";
@@ -2071,7 +1694,7 @@ $(function()
 
 			option+= "<li class=''><input type='text' id='alt' placeholder=\""+ __("Image caption") +"\" title=\""+ __("Image caption") +"\" class='w150p small'></li>";
 
-			option+= "<li><button onclick=\"img_remove()\" title=\""+ __("Delete image") +"\"><i class='fa fa-fw fa-trash'></i></button></li>";
+			option+= "<li><button onclick=\"img_remove()\" title=\""+ __("Delete") +"\"><i class='fa fa-fw fa-trash'></i></button></li>";
 
 		option+= "</ul>";
 
@@ -2146,7 +1769,7 @@ $(function()
 		var alt = $('img', this).attr("alt");
 		return "<input type='text' placeholder=\""+ __("Image caption") +"\" class='editable-alt' id='"+ $(this).attr("id") +"-alt' value=\""+ (alt != undefined ? alt : '') +"\">" +
 			"<div class='open-dialog-media' title='"+__("Upload file")+"'><i class='fa fa-upload bigger'></i> "+__("Upload file")+"</div>" + 
-			"<div class='clear-file' title=\""+ __("Delete file") +"\"><i class='fa fa-trash'></i> "+ __("Delete file") +"</div>"
+			"<div class='clear-file' title=\""+ __("Delete") +"\"><i class='fa fa-trash'></i> "+ __("Delete") +"</div>"
 	});
 
 
@@ -2257,7 +1880,7 @@ $(function()
 	$("[data-bg]").append("<div class='bg-tool'><a href=\"javascript:void(0)\" class='open-dialog-media block'>"+__("Change the background image")+" <i class='fa fa-picture'></i></a></div>");
 
 	// S'il y a une image en fond on ajoute l'option de suppression de l'image de fond
-	clearbg_bt = "<a href=\"javascript:void(0)\" class='clear-bg' title=\""+__("Delete image")+"\"><i class='fa fa-trash'></i></a>";
+	clearbg_bt = "<a href=\"javascript:void(0)\" class='clear-bg' title=\""+__("Delete")+"\"><i class='fa fa-trash'></i></a>";
 	$("[data-bg]").each(function() {
 		if($(this).data("bg"))
 			$(".bg-tool", this).prepend(clearbg_bt);
@@ -2289,6 +1912,7 @@ $(function()
 		$(this).parent().parent().attr('data-bg','').css("background-image","none");
 		$(this).remove();
 	});
+
 
 
 	/************** MODULE DUPLICABLE **************/
@@ -2402,6 +2026,7 @@ $(function()
 	};
 
 
+
 	/************** CHAMPS INPUT **************/
 	
 	// Ajout un placeholder s'il n'y en a pas
@@ -2498,223 +2123,14 @@ $(function()
 	// Exécute l'event sur les liens éditables
 	editable_href_event();
 
-
-
-	/************** AUTOCOMPLETE DE SUGGESTION DES PAGES EXISTANTES POUR L'AJOUT DE LIEN **************/
-	$(document).on("keydown.autocomplete", "#txt-tool .option #link, .editable-href", function() {
-		$(this).autocomplete({
-			minLength: 0,
-			source: path+"api/ajax.admin.php?mode=links&nonce="+$("#nonce").val(),
-			select: function(event, ui) { 
-				$(this).val(ui.item.value);// Action au click sur la selection
-			}
-		})
-		.focus(function(){
-			$(this).data("uiAutocomplete").search($(this).val());// Ouvre les suggestions au focus
-		})
-		.autocomplete("instance")._renderItem = function(ul, item) {// Mise en page des résultats
-	      	return $("<li>").append("<div title='"+item.value+"'>"+item.label+" <span class='grey italic'>"+item.type+"</span></div>").appendTo(ul);
-	    };
-	});
-
     
-
-	/************** SYSTÈME DE TAG / CATÉGORIE **************/
-/*
-	// Si champs tag
-	if($(".editable-tag").length) 
-	{
-		// Transforme le champs tag en editable
-		$(".editable-tag").attr("contenteditable", "true");
-
-		// AUTOCOMPLETE
-		tag_zone = $(".editable-tag").attr('id');
-		autocomplete_keydown = false;
-		var samezone = false;
-
-		// Séparateur
-		var separator = $(".editable-tag").data('separator');// Si on en force un
-		if(!separator) separator = ', ';// Sinon celui par défaut
-		var regex = separator.replace(" ", "\\s*");// Replace les espaces par des espaces optionnels
-		regex = new RegExp(regex, "g");// Crée une regex avec la string
-
-
-		$(".editable-tag").on("keydown", function(event) {				
-			// Ne quitte pas le champ lorsque l'on utilise TAB pour sélectionner un élément
-			if(event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active)
-				event.preventDefault();	
-
-			autocomplete_keydown = true;// On a fait une saisie au clavier
-			
-			tosave();// A sauvegarder si on écrit
-		})
-		.autocomplete({
-			minLength: 0,
-			source: function(request, response) {
-
-	            // Si les data on déjà était chargé donc on affiche direct le resultat
-	            if(samezone && typeof all_data !== 'undefined') {
-	            	response($.ui.autocomplete.filter(all_data, request.term.split(regex).pop()));
-	            	return;
-	            }
-
-				$.ajax({
-					type: "POST",
-					dataType: "json",
-					url: path+"api/ajax.admin.php?mode=tags",
-					data: {
-						"zone": tag_zone,
-						"nonce": $("#nonce").val()
-					},
-					success: function(data) {
-						
-						// hide loading image
-						//$('input.suggest-user').removeClass('ui-autocomplete-loading');  
-                		//response(data);
-	                	//response($.map(data, function(item) { }));
-
-						all_data = data;// Pour la mise en cache de la liste complete
-
-						// Déléguer à la saisie semi-automatique et extrait le dernier terme
-	                	response($.ui.autocomplete.filter(data, request.term.split(regex).pop()));
-		            }
-		        });
-			},
-			focus: function() {
-				//$(this).data("uiAutocomplete").search($(this).val());
-				return false;// prevent value inserted on focus
-			},
-			select: function(event, ui) {
-
-				// Crée un tableau avec les éléments déjà présents dans la liste
-				if($(this).text()) var terms = $(this).text().split(regex);
-				else var terms = [];
-
-				// Supprimer l'entrée actuelle SI on a fait une recherche
-				if(autocomplete_keydown) terms.pop();
-
-				// Ajouter l'élément sélectionné
-				terms.push(ui.item.value);
-
-				// Ajoute le placeholder pour avoir la virgule+espace à la fin
-				//terms.push("");
-
-				// Ajoute le tag
-				$(this).text(terms.join(separator));
-
-				// Pour focus à la fin du champ tags
-				range = document.createRange();//Create a range (a range is a like the selection but invisible)
-		        range.selectNodeContents(this);//Select the entire contents of the element with the range
-		        range.collapse(false);//collapse the range to the end point. false means collapse to end rather than the start
-		        selection = window.getSelection();//get the selection object (allows you to change selection)
-		        selection.removeAllRanges();//remove any selections already made
-		        selection.addRange(range);
-
-		        // A sauvegarder
-		        tosave();
-
-				return false;
-			}
-		})
-		.focus(function(){// Chargement au focus de la liste des tags dispo
-			// Si on selection la meme zone de tag
-			if(tag_zone == $(this).attr('id')) {
-				samezone = true;
-			} else {
-				tag_zone = $(this).attr('id');
-				samezone = false;
-			}
-			$(this).autocomplete("search", "");
-		});
-	}
-*/
-
-	/************** LISTE DES CONTENUS **************/
-/*
-	// Ouverture de la liste des contenus
-	$("#list-content i").on("click",
-		function(event) {
-			$.ajax({
-				type: "POST",
-		        url: path+"api/ajax.admin.php?mode=list-content",
-				data: {"nonce": $("#nonce").val()},
-				success: function(html)
-				{				
-					$("body").append(html);
-
-					$(".dialog-list-content").dialog({
-						autoOpen: false,
-						//modal: true,
-						width: 'auto',
-						maxWidth: '50%',
-		        		position: { my: "left+10 top", at: "left bottom+10", of: $("#admin-bar") },
-						show: function() {$(this).fadeIn(300);},
-						close: function() { $(".dialog-list-content").remove(); }
-					});
-
-					$(".dialog-list-content").dialog("open");
-				}
-		    });
-		}
-	);
-*/
-
-	/************** USERS **************/
-/*
-	// Ouverture de l'admin des users
-	$("#user i").on("click mouseenter",	// touchstart
-		function(event) {
-
-			event.stopPropagation();
-			event.preventDefault();		
-
-			// Pour ne pas ouvrir les meta du title si l'admin user ouverte	
-			$("#meta").addClass("nofire");
-
-			if(!$("#user .absolute").length && event.type == "mouseenter")
-			{
-				$.ajax({
-					type: "POST",
-					url: path+"api/ajax.php?mode=user",
-					data: {"nonce": $("#nonce").val()},
-					success: function(html){ 
-						$("#user").append(html);						
-						
-						// Pour fermer l'admin user quand on click en dehors
-						close = false;
-						$(document).on("click",	
-							function(event) {
-								if(!$(event.target).parents().is("#user .absolute") && $("#user .absolute").is(":visible") && close == false)//event.type == 'click'
-									if($("#user button.to-save").length || $("#user button i.fa-spin").length)// Si fiche pas sauvegardé on shake
-										$("#user .absolute > div").effect("highlight");
-									else {
-										$("#user .absolute").fadeOut("fast", function(){ close = true; });
-										$("#meta").removeClass("nofire");// Remets le champ meta en hover disponible
-									}
-							}
-						);
-					}
-				});
-			}
-			else if($("#user .absolute").length && !$("#user .absolute").is(":visible")&& close == true)// Si on click et que l'ajax a déjà été fait
-			{
-				close = true;
-				$("#user .absolute").fadeIn("fast", function(){ close = false; });
-			}
-			else if(event.type == 'click' && $("#user .absolute").is(":visible") && close == false )// Si on click sur le bt user de l'admin-bar
-			{
-				$("#user .absolute").fadeOut("fast", function(){ close = true; });
-				$("#meta").removeClass("nofire");// Remets le champ meta en hover disponible
-			}
-		}
-	);
-*/
 
 	/************** EXECUTION DES FONCTIONS D'EDITION DES PLUGINS **************/
 	if(typeof edit !== 'undefined')
 	$(edit).each(function(key, funct){
 		funct();
 	});
+
 
 
 	/************** ACTION **************/
@@ -2725,124 +2141,9 @@ $(function()
 	});
 
 
-	// Suppression du contenu
-	$("#del").click(function() 
-	{	
-		medias = {};
-
-		// Contenu des images éditables, bg et dans les contenus textuels
-		$(document).find(".content img.editable, .content .editable img, .content [data-bg]").each(function() {
-			if($(this).hasClass("editable-bg")) var media = $(this).attr("data-bg");
-			else var media = $(this).attr("src");
-
-			if(media) medias[media] = "img";
-		});
-
-		// Contenu des fichiers éditables et dans les contenus textuels
-		$(document).find(".content img.editable .fa, .content .editable a[href^='media/']").each(function() {
-			if($(this).closest("span").hasClass("editable-media")) var media = $(this).attr("title");
-			else var media = $(this).attr("href");
-
-			if(media) medias[media] = "fichier";
-		});
-
-
-		// Clean les url pour supprimer l'host et les données après le "?"
-		medias_clean = {};
-		host = location.protocol +'//'+ location.host + path;
-		$.each(medias, function(media, type) {
-			media = media.replace(host, "").split("?")[0];
-			medias_clean[media] = type;			
-		});
-
-
-		// Dialog de confirmation de suppression 
-		$("body").append("<div class='dialog-del' title='"+ __("Delete the page") + ' \"' + document.title.replace(/'/g, '&apos;') + "\" ?'></div>");
-
-		// S'il y a des médias à supprimer
-		if(Object.keys(medias_clean).length > 0)
-		{
-			// Option de suppression des média liée au contenu			
-			$(".dialog-del").append("<input type='checkbox' id='del-medias' class='inline'> <label for='del-medias' class='inline'>"+ __("Also remove media from content") +"</label><ul class='unstyled man'></ul>");
-
-			// Affiche la liste des medias
-			$.each(medias_clean, function(media, type) {
-				if(type == "img") $(".dialog-del ul").append("<li><label for=\""+ media +"\"><img src=\""+ media +"\" title=\""+ media +"\"></label> <input type='checkbox' class='del-media' id=\""+ media +"\"></li>");
-				else $(".dialog-del ul").append("<li><label for=\""+ media +"\"><i class='fa fa-fw fa-doc biggest' title=\""+ media +"\"></i></label> <input type='checkbox' class='del-media' id=\""+ media +"\"></li>");
-			});
-
-			// Au click sur la checkbox générale on coche tous les médias ont supprimé
-			$("#del-medias").click(function() {	
-				if($(this).prop("checked") == true) $(".del-media").prop("checked", true);
-				else $(".del-media").prop("checked", false);
-			});
-
-			// Au click sur une checkbox de média on vérifie si tous est coché et on coche la checkbox générale
-			$(".del-media").click(function() {	
-				if($(".del-media:checked").length == $(".del-media").length) $("#del-medias").prop("checked", true);
-				else $("#del-medias").prop("checked", false);
-			});
-		}
-
-
-		// Dialog de suppression
-		$(".dialog-del").dialog({
-			modal: true,
-			buttons: 
-			[{
-            	text: __("Cancel"),
-           		click: function() { $(".dialog-del").remove(); }
-			},{
-				text: "Ok",
-				click: function() {
-					medias_post = [];
-
-					// Récupère tous les médias sélectionnés
-					$(".dialog-del ul input:checked").each(function() {
-					    medias_post.push($(this).attr("id"));
-					});
-
-					// Requete de suppression
-					$.ajax({
-						type: "POST",
-						url: path + "api/ajax.admin.php?mode=delete",
-						data: {
-							"url": clean_url(),
-							"type": type,
-							"id": id,
-							"medias": medias_post,
-							"nonce": $("#nonce").val()// Pour la signature du formulaire
-						}
-					})
-					.done(function(html) {		
-						$(".dialog-del").dialog("close");
-						$("body").append(html);
-					});					
-				}
-			}],
-			close: function() {
-				$(".dialog-del").remove();					
-			}
-		});
-	});
-
-
 	// On change une info dans un menu select
 	$("#admin-bar select").change(function() {
 		tosave();// A sauvegarder
-	});
-
-
-	// Si on change le statut d'activation
-	$("#state-content").click(function() {
-
-		// Masque la bulle admin qui indique si la page est désactivée
-		if($("#admin-bar #state-content").prop("checked") == true)
-			$(".bt.fixed.construction").fadeOut();
-		else 
-			$(".bt.fixed.construction").fadeIn();
-
-		tosave();
 	});
 
 
@@ -2918,6 +2219,6 @@ $(function()
 
 
 	// Désactive le click pour ne pas relancer l'admin
-	$(".bt.edit").off("click");
+	$(".bt.edit").off("click").fadeOut();
 
 });	
