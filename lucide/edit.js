@@ -1,5 +1,7 @@
 // @todo: mettre une barre loading et readonly qd save
 
+// Variable par défaut
+if(typeof path == 'undefined') path = '';
 
 // Type de navigateur
 $.browser = {};
@@ -90,45 +92,6 @@ clean_url = function() {
 }
 
 
-// Rapatrie le contenu
-get_content = function(content)
-{
-	// Supprime les index devant les class et id
-	var content_array = content.replace(/\.|#/, '');
-
-	data[content_array] = {};
-
-	// Contenu des champs éditables
-	$(document).find(content+" .editable").each(function() {
-		// Si on est en mode pour voir le code source
-		if($(this).hasClass("view-source")) var content_editable = $(this).text();
-		else var content_editable = $(this).html();
-
-		if($(this).html()) data[content_array][this.id] = content_editable;
-	});
-	
-	// Contenu des images éditables
-	$(document).find(content+" img.editable").each(function() {
-		if($(this).attr("src")) data[content_array][$(this).closest("img.editable").attr("id")] = $(this).attr("src");
-	});
-	
-	// Contenu des background images éditables
-	$(document).find(content+" [data-bg]").each(function() {
-		if($(this).attr("data-bg")) data[content_array][$(this).attr("data-id")] = $(this).attr("data-bg");
-	});
-		
-	// Checkbox fa
-	$(document).find(content+" .editable-checkbox").each(function() {
-		if($(this).hasClass("fa-ok")) data[content_array][this.id] = true;					
-	});
-
-	// Contenu des select, input hidden, href éditables // content+" input, "+
-	$(document).find(content+" .editable-select, "+content+" .editable-input, "+content+" .editable-href, "+content+" .editable-alt").each(function() {
-		if($(this).attr("type") == "checkbox") data[content_array][this.id] = $(this).prop("checked");			
-		else if($(this).val()) data[content_array][this.id] = $(this).val(); 
-	});
-}
-
 
 // Sauvegarde les contenus
 save = function() //callback
@@ -136,6 +99,7 @@ save = function() //callback
 	// @todo: disable/unbind sur save pour dire que l'on est en train de sauvegarder
 	
 	// Fonction à exécuter avant la collect des datas
+	if(typeof before_data !== 'undefined')
 	$(before_data).each(function(key, funct){ funct(); });
 
 	// Si image sélectionnée : raz propriétés image (sécurité pour ne pas enregistrer de ui-wrapper)
@@ -149,8 +113,6 @@ save = function() //callback
 	data["nonce"] = $("#nonce").val();// Pour la signature du formulaire
 
 	data["url"] = clean_url();// Url de la page en cours d'édition
-
-	data["permalink"] = $("#admin-bar #permalink").val();// Permalink
 
 	data["title"] = $("#admin-bar #title").val();// Titre de la page
 	data["description"] = $("#admin-bar #description").val();// Description pour les serp
@@ -170,7 +132,42 @@ save = function() //callback
 	data["date-insert"] = $("#admin-bar #date-insert").val();// Date de création de la page
 	
 
-	get_content("body");// Contenu de la page
+	// CONTENU DE LA PAGE
+	data["content"] = {};
+	data["content"]["img"] = {};
+	data["content"]["bg"] = {};
+	i = 1;
+
+
+	// Contenu des champs éditables
+	$(document).find(".editable:not(img)").each(function() {
+		// Si on est en mode pour voir le code source
+		if($(this).hasClass("view-source")) var content_editable = $(this).text();
+		else var content_editable = $(this).html();
+
+		if($(this).html()) data["content"][i] = content_editable;
+
+		++i;
+	});
+	
+	// Contenu des images éditables
+	$(document).find("img.editable").each(function() {
+		if($(this).attr("src")) data["content"]["img"][i] = $(this).attr("src");
+		++i;
+	});
+	
+	// Contenu des background images éditables
+	$(document).find("[data-bg]").each(function() {
+		if($(this).attr("data-bg")) data["content"]["bg"][i] = $(this).attr("data-bg");
+		++i;
+	});
+
+	// Contenu des select, input hidden, href éditables // content+" input, "+
+	$(document).find(".editable-select, .editable-input, .editable-href, .editable-alt").each(function() {
+		if($(this).attr("type") == "checkbox") data["content"][i] = $(this).prop("checked");			
+		else if($(this).val()) data["content"][i] = $(this).val(); 
+		++i;
+	});
 
 
 	if($("#admin-bar #og-image img").attr("src"))
@@ -178,13 +175,14 @@ save = function() //callback
 
 
 	// Fonction à exécuter avant la sauvegarde
+	if(typeof before_save !== 'undefined')
 	$(before_save).each(function(key, funct){ funct(); });
 
 	// On sauvegarde en ajax les contenus éditables
 	if(lucide == true)	
 	$.ajax({
 		type: "POST",
-		url: path+"api/ajax.admin.php?mode=update",
+		url: path+"lucide/ajax.php?mode=update",
 		data: data
 	})
 	.done(function(html) {
@@ -192,6 +190,7 @@ save = function() //callback
 		$("body").append(html);
 
 		// Fonction à exécuter après la sauvegarde
+		if(typeof after_save !== 'undefined')
 		$(after_save).each(function(key, funct){ funct(); });
 	})
 	.fail(function() {
@@ -501,7 +500,7 @@ dialog = function(mode, source, target, callback) {
 
 	$.ajax({
 			type: "POST",
-			url: path+"api/ajax.admin.php?mode=dialog-"+mode, 
+			url: path+"lucide/ajax.php?mode=dialog-"+mode, 
 			data: {
 				"target": target,
 				"source": (target == "bg" ? $(source).attr("data-id") : source.id),
@@ -676,7 +675,7 @@ upload = function(source, file, resize)
 
 			$.ajax({
 				type: "POST",
-				url: path+"api/ajax.admin.php?mode=add-media",
+				url: path+"lucide/ajax.php?mode=add-media",
 				xhr: function() {
 					var xhr = $.ajaxSettings.xhr();
 					if(xhr.upload) {									
@@ -819,7 +818,7 @@ get_img = function(id, link)
 	// Resize de l'image et insertion dans la source
 	$.ajax({
 		type: "POST",
-		url: path+"api/ajax.admin.php?mode=get-img",
+		url: path+"lucide/ajax.php?mode=get-img",
 		data: {
 			"img": $("#"+id).attr("data-media"),
 			"width": width,
@@ -1012,7 +1011,7 @@ img_optim = function(option, that) {
 	// Resize de l'image et remplacement
 	$.ajax({
 		type: "POST",
-		url: path+"api/ajax.admin.php?mode=get-img",
+		url: path+"lucide/ajax.php?mode=get-img",
 		data: {
 			"img": src,
 			"width": width,
@@ -1240,7 +1239,7 @@ $(function()
 	if(/nofollow/i.test($('meta[name=robots]').last().attr("data"))) $("#admin-bar #nofollow").prop("checked", true);
 
 
-	$("#admin-bar #permalink").val(permalink);
+	//$("#admin-bar #permalink").val(permalink);
 	//$("#admin-bar #type").val(type);
 	//$("#admin-bar #tpl").val(tpl);
 
@@ -2086,17 +2085,6 @@ $(function()
 
 
 
-	/************** CHAMPS CHECKBOX **************/
-	$(".editable-checkbox, .lucide [for]").not(".lucide #admin-bar [for]").on("click", function(event) {
-		if($(this).attr("for")) var id = $(this).attr("for");
-		else var id = this.id;
-
-		if($("#"+id).hasClass("fa-ok")) $("#"+id).removeClass("fa-ok yes").addClass("fa-cancel no");
-		else $("#"+id).removeClass("fa-cancel no").addClass("fa-ok yes");
-	})
-
-
-
 	/************** HREF EDITABLE **************/
 	
 	// Ajoute un input pour ajouter l'url du href
@@ -2186,7 +2174,7 @@ $(function()
 			}
 		}
 		// Si on tape du texte dans un contenu éditable on change le statut du bouton sauvegardé
-		else if(event.target.className.match(/(editable)/) || event.target.id.match(/^(title|description|permalink)$/)) 
+		else if(event.target.className.match(/(editable)/) || event.target.id.match(/^(title|description)$/)) 
 		{	
 			// Caractères texte ou 0/96 ou entrée
 			if(String.fromCharCode(event.which).match(/\w/) || event.keyCode == 96 || event.keyCode == 13)

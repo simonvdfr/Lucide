@@ -298,601 +298,81 @@ switch($_GET['mode'])
 
 
 
-	case "add-content":// Dialog pour ajouter une page
-
-		unset($_SESSION['nonce']);// Pour éviter les interférences avec un autre nonce de session
-
-		login('medium');
-
-		// @todo metre en none, chaché les options avancé (permalien, regen, home)
-
-		// Dialog : titre, template, langue
-		?>
-		<link rel="stylesheet" href="<?=$GLOBALS['jquery_ui_css']?>">
-
-		<link rel="stylesheet" href="<?=$GLOBALS['path']?>api/lucide.css?0.1">
-
-
-		<div class="dialog-add" title="<?php _e("Add content")?>">
-			
-			<input type="hidden" id="nonce" value="<?=nonce("nonce");?>">
-
-			<ul class="small">
-				<?php 
-				foreach($GLOBALS['add_content'] as $cle => $array)
-				{
-					if(isset($_SESSION['auth']['add-'.$cle])){
-						echo'<li data-filter="'.$cle.'" data-tpl="'.$array['tpl'].'"><a href="#add-'.$cle.'"><i class="fa '.$array['fa'].'"></i> <span>'.__("Add ".$cle).'</span></a></li>';
-					}
-				}
-				?>
-			</ul>					
-
-			<div class="none">
-				<?php 
-				reset($GLOBALS['add_content']);
-				foreach($GLOBALS['add_content'] as $cle => $array)
-				{
-					if(isset($_SESSION['auth']['add-'.$cle])) echo'<div id="add-'.$cle.'"></div>';
-				}
-				?>
-			</div>
-			
-
-			<div>
-
-				<div class="mas">
-					<input type="text" id="title" placeholder="<?php _e("Title")?>" maxlength="70" class="w60 bold">
-					
-					<select id="tpl" required class="w30">
-						<option value=""><?php _e("Select template")?></option>
-						<?php 
-						$scandir = array_diff(scandir($_SERVER['DOCUMENT_ROOT'].$GLOBALS['path']."theme/".$GLOBALS['theme'].($GLOBALS['theme']?"/":"")."tpl/"), array('..', '.'));
-						foreach($scandir as $cle => $filename)
-						{			
-							$filename = pathinfo($filename, PATHINFO_FILENAME);
-							echo"<option value=\"".$filename."\">".$filename."</option>";
-						}
-						?>					
-					</select>
-				</div>
-
-				<div class="mas mtm">
-					<input type="text" id="permalink" placeholder="<?php _e("Permanent link")?>" maxlength="70" class="w50 mrm">
-					<label for="homepage" class="mrs mtn none"><input type="checkbox" id="homepage"> <?php _e("Home page")?></label>
-					<label id="refresh-permalink" class="mtn"><i class="fa fa-fw fa-arrows-cw"></i><?php _e("Regenerate address")?></label>
-				</div>
-
-			</div>
-
-
-			<script>
-			$(function()
-			{
-				// Update les nonces dans la page courante pour éviter de perdre le nonce
-				$("#nonce").val('<?=$_SESSION['nonce']?>');			
-
-				// Au click sur un onglet
-				$(".dialog-add ul li").click(function(event) {
-					var filter = $(this).data("filter");
-
-					// Affiche ou masque le bt permalink home
-					if(filter == "page") $("label[for='homepage']").show();
-					else $("label[for='homepage']").hide();
-
-					// Force la template du type
-					$(".dialog-add #tpl").val($(this).data("tpl"));
-
-					// Reconstruit le permalink
-					refresh_permalink(".dialog-add");
-				});
-
-				// Changement au click de la checkbox homepage
-				$(".dialog-add #homepage").change(function() {
-					if(this.checked) $(".dialog-add #permalink").val("index");
-					else refresh_permalink(".dialog-add");
-				});
-
-				// Click refresh permalink
-				$(".dialog-add #refresh-permalink").click(function() {
-					refresh_permalink(".dialog-add");
-				});
-
-				// Création du permalink lors de la saisie du title
-				var timer = null;
-				$(".dialog-add #title").keyup(function() 
-				{
-					if(timer != null) clearTimeout(timer);
-
-					timer = setTimeout(function() {
-						timer = null;
-						refresh_permalink(".dialog-add");
-					}, '500');
-				});
-
-				// Chargement de Jquery UI
-				$.ajax({
-			        url: "<?=$GLOBALS['jquery_ui']?>",
-			        dataType: 'script',
-			        cache: true,
-			        async: true,
-					success: function()// Si Jquery UI bien charger on ouvre la dialog
-					{				
-						// Fermeture de la dialog de connexion
-						$("#dialog-connect").dialog("close");
-
-						// Création de la dialog d'ajout
-						$(".dialog-add").dialog({
-							modal: true,
-							width: "60%",
-							buttons: {
-								"OK": function() 
-								{								
-									// Dans quel onglet on se situe
-									type = $(".ui-tabs-nav .ui-state-active").data("filter");
-
-									if(!$(".dialog-add #tpl").val()) error(__("Thank you to select a template"));
-									else {
-										$.ajax({
-											type: "POST",
-											url: path + "api/ajax.admin.php?mode=insert",
-											data: {
-												"title": $(".dialog-add #title").val(),
-												"tpl": $(".dialog-add #tpl").val(),
-												"permalink": $(".dialog-add #permalink").val(),
-												"type": type,
-												"nonce": $("#nonce").val()// Pour la signature du formulaire
-											}
-										})
-										.done(function(html) {		
-											$(".dialog-add").dialog("close");
-											$("body").append(html);
-										});
-									}
-								}
-							},
-							create: function() 
-							{						
-								// Création des onglets
-								$(".dialog-add").tabs();
-
-								// Place les onglets à la place du titre de la dialog
-								$(".ui-dialog-title").html($(".ui-tabs-nav")).parent().addClass("ui-tabs");
-
-								// Template sélectionnée par défaut
-								$(".dialog-add #tpl").val($(".ui-dialog ul li[aria-selected='true']").data("tpl"));
-							},
-							close: function() {
-								$(".dialog-add").remove();					
-							}
-						});
-					}
-			    });	
-				
-			});
-			</script>
-
-		</div>
-		<?php 				
-	break;
-
-
-	case "insert":// Crée une nouvelle page
-
-		include_once("db.php");// Connexion à la db
-
-		$type = encode($_POST['type']);
-
-		login('high', 'add-'.$type);// Vérifie que l'on a le droit d'ajouter une page
-
-		// @todo verifier que le permalink est bien enregister si il est diff du titre
-
-		$url = (encode($_POST['permalink']) ? encode($_POST['permalink']) : encode($_POST['title']));
-
-		if($url) 
-		{
-			// Ajoute la page
-			$sql = "INSERT ".$table_content." SET ";
-			$sql .= "title = '".addslashes($_POST['title'])."', ";
-			$sql .= "tpl = '".addslashes($_POST['tpl'])."', ";
-			$sql .= "url = '".$url."', ";
-			$sql .= "lang = '".$lang."', ";
-			$sql .= "type = '".$type."', ";
-			$sql .= "user_insert = '".(int)$_SESSION['uid']."', ";
-			$sql .= "date_insert = NOW() ";
-			
-			$connect->query($sql);
-			
-			if($connect->error)// Si il y a une erreur
-				echo htmlspecialchars($sql)."\n<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-
-			else // Sauvegarde réussit
-			{
-				// Pose un cookie pour demander l'ouverture de l'admin automatiquement au chargement
-				setcookie("autoload_edit", "true", time() + 60*60, $GLOBALS['path'], $GLOBALS['domain']);
-				
-				?>
-				<script>
-				$(function()
-				{		
-					// Redirection vers la page crée
-					document.location.href = "<?=make_url($url, array("domaine" => true));?>";
-				});
-				</script>
-				<?php 
-			}
-		}
-		else 
-			echo"<script>error(\"".__("No permanent link for content")."\");</script>";	
-
-	break;
-
-
 	case "update":// Sauvegarde du contenu éditable de la page
 
-		include_once("db.php");// Connexion à la db
+		highlight_string(print_r($_POST, true)); exit;
+
+
+		// Verifie que l'on a la connexion ftp en cours, ou que l'on est en local
+		//login('high', 'edit-'.$type);// Vérifie que l'on peut éditer une page
 		
-		//highlight_string(print_r($_POST, true)); exit;
-
-		$type = ($_POST['type']?encode($_POST['type']):"page");// Type de contenu
-
-		login('high', 'edit-'.$type);// Vérifie que l'on peut éditer une page
-		
-		// PREPARATION POUR LE CONTENU ET NAVIGATION
-		// On récupère les données de la page pour comparaison
-		$sel = $connect->query("SELECT * FROM ".$table_content." WHERE url='".get_url($_POST['url'])."' AND lang='".$lang."' LIMIT 1");
-		$res = $sel->fetch_assoc();		
-		
-		// Si le titre à changer et que l'on n'est pas sur le home on change l'URL de la page
-		if($res['url'] != encode($_POST['permalink']) or (encode($_POST['title']) and !encode($_POST['permalink']))) 
-		{
-			if(!encode($_POST['permalink']) and encode($_POST['title'])) 
-				$change_url = encode($_POST['title']);
-			elseif(!encode($_POST['permalink']) and !encode($_POST['title'])) 
-				$change_url = $type."-".$res['id'];
-			else 
-				$change_url = encode($_POST['permalink']);
-		}
-
-
-		// Check si la page a bien une url par sécuritée
-		if((isset($change_url) and $change_url == "") or get_url($_POST['url']) == "")
-			exit("<script>error(\"".__("No permanent link for content")."\");</script>");
-
-
-		// Verification de la config de https
-		if(@$_SERVER['REQUEST_SCHEME'] == 'https' and $GLOBALS['scheme'] != 'https://')
-		{
-			// Message d'erreur pour inviter à éditer config.php
-			echo "<script>error(\"".__("Vous naviguer en https mais ça n'est pas spécifié dans config.php (scheme = https://)")."\");</script>";
-
-			// On change la variable qui permet de supprimer les chemins pour qu'elle soit appropriée
-			$GLOBALS['home'] = str_replace('http://', 'https://', $GLOBALS['home']);
-		}
-
-
-		// MENU DE NAVIGATION
-		if(isset($_POST['nav']))
-		{
-			// On regarde s'il y a déjà des données
-			$sel_nav = $connect->query("SELECT * FROM ".$table_meta." WHERE type='nav' AND cle='".$lang."' LIMIT 1");
-			$res_nav = $sel_nav->fetch_assoc();	
-			
-			// On remplace le chemin absolut du site par la clé : home (utilise pour éviter les bug lors des mises en lignes)
-			array_walk($_POST['nav'], 
-				function(&$key) { 	
-					$key['href'] = str_replace($GLOBALS['home'], "", $key['href']);// Supprime les url avec le domaine pour faciliter le transport du site
-
-					// Si vide ou raçine path on est sur la home
-					if($key['href'] == "" or $key['href'] == $GLOBALS['path']) $key['href'] = "index";
-				}
-			);
-
-			// Si on change d'url (permalink) on change dans le menu le lien correspondant
-			if(isset($change_url)) {
-				array_walk($_POST['nav'], 
-					function(&$key) { 
-						global $res, $change_url;
-						if($key['href'] == $res['url']) $key['href'] = $change_url;
-					}
-				);
-			}
-
-			// On  encode les données
-			$json_nav = json_encode($_POST['nav'], JSON_UNESCAPED_UNICODE);
-			
-			// Insert ou update ?
-			if($res_nav['type']) $sql = "UPDATE"; else $sql = "INSERT INTO";
-			$sql .= " ".$table_meta." SET ";
-			$sql .= "id = '0', ";
-			$sql .= "type = 'nav', ";
-			$sql .= "cle = '".$lang."', ";
-			$sql .= "val = '".addslashes($json_nav)."' ";
-			if($res_nav['type']) $sql .= "WHERE type='nav' AND cle='".$lang."' LIMIT 1";
-			
-			$connect->query($sql);
-
-			// Si il y a une erreur
-			if($connect->error)
-				echo htmlspecialchars($sql)."\n<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-		}
-
-
-		// HEADER
-		if(isset($_POST['header']))
-		{
-			// On regarde s'il y a déjà des données
-			$sel_header = $connect->query("SELECT * FROM ".$table_meta." WHERE type='header' AND cle='".$lang."' LIMIT 1");
-			$res_header = $sel_header->fetch_assoc();	
-			
-			// Supprime les url avec le domaine pour faciliter le transport du site
-			$_POST['header'] = str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['header']);
-			
-			// On  encode les données
-			$json_header = json_encode($_POST['header'], JSON_UNESCAPED_UNICODE);
-			
-			// Insert ou update ?
-			if($res_header['type']) $sql = "UPDATE"; else $sql = "INSERT INTO";
-			$sql .= " ".$table_meta." SET ";
-			$sql .= "id = '0', ";
-			$sql .= "type = 'header', ";
-			$sql .= "cle = '".$lang."', ";
-			$sql .= "val = '".addslashes($json_header)."' ";
-			if($res_header['type']) $sql .= "WHERE type='header' AND cle='".$lang."' LIMIT 1";
-			
-			$connect->query($sql);
-
-			// Si il y a une erreur
-			if($connect->error)
-				echo htmlspecialchars($sql)."\n<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-		}
-
-				
-		// FOOTER
-		if(isset($_POST['footer']))
-		{
-			// On regarde s'il y a déjà des données
-			$sel_footer = $connect->query("SELECT * FROM ".$table_meta." WHERE type='footer' AND cle='".$lang."' LIMIT 1");
-			$res_footer = $sel_footer->fetch_assoc();		
-
-			// Supprime les url avec le domaine pour faciliter le transport du site
-			$_POST['footer'] = str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['footer']);
-			
-			// On  encode les données
-			$json_footer = json_encode($_POST['footer'], JSON_UNESCAPED_UNICODE);
-			
-			// Insert ou update ?
-			if($res_footer['type']) $sql = "UPDATE"; else $sql = "INSERT INTO";
-			$sql .= " ".$table_meta." SET ";
-			$sql .= "id = '0', ";
-			$sql .= "type = 'footer', ";
-			$sql .= "cle = '".$lang."', ";
-			$sql .= "val = '".addslashes($json_footer)."' ";
-			if($res_footer['type']) $sql .= "WHERE type='footer' AND cle='".$lang."' LIMIT 1";
-			
-			$connect->query($sql);
-
-			// Si il y a une erreur
-			if($connect->error)
-				echo htmlspecialchars($sql)."\n<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-		}
-		
-		
-		// Clean les tags de la fiche dans la bdd
-		$connect->query("DELETE FROM ".$table_tag." WHERE id='".(int)$_POST['id']."'");
-
-		// TAG ajout au tag
-		if(!isset($_POST['tag-info']) and isset($_POST['tag']))
-		{
-			foreach($_POST['tag'] as $zone => $tags) 
-			{
-				$zone = encode($zone);
-
-				// split les tags en fonction du séparateur
-				$tags = explode((@$_POST['tag-separator']?trim($_POST['tag-separator']):","), trim($tags));
-
-				$i = 1;
-				foreach($tags as $cle => $val) {
-					if(isset($val) and $val != "") {			
-						$connect->query("INSERT INTO ".$table_tag." SET id='".(int)$_POST['id']."', zone='".$zone."', encode='".encode($val)."', name='".addslashes(trimer($val))."', ordre='".$i."'");
-						$i++;
-					}
-				}
-				
-				if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-			}
-		}
-
-		
-		// TAG-INFO ajout au meta les informations d'une page tag
-		if(isset($_POST['tag-info']) and isset($_POST['tag'])) 
-		{
-			$tag = html_entity_decode($_POST['tag']);// Pour un titre/url sans html encodé
-
-			$tag_url = encode(key($GLOBALS['filter']));// Permalink du tag
-
-			// Supprime les infos du tag
-			$connect->query("DELETE FROM ".$table_meta." WHERE type='tag-info' AND (cle='".encode($tag)."' OR cle='".$tag_url."')");
-			
-			// Supprime les url avec le domaine pour faciliter le transport du site
-			$_POST['tag-info'] = str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['tag-info']);
-
-			// Insertion des infos du tag
-			$tag_info = json_encode($_POST['tag-info'], JSON_UNESCAPED_UNICODE);
-			$connect->query("INSERT INTO ".$table_meta." SET type='tag-info', cle='".encode($tag)."', val='".addslashes($tag_info)."'");
-			if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-
-
-			// Update les tags des contenus
-			// SUPP APRES TEST SUR LA NOUVELLE TABLE TAG
-			//$connect->query("UPDATE ".$table_meta." SET cle='".encode($tag)."', val='".addslashes($tag)."' WHERE type='tag' AND cle='".$tag_url."'");
-			$connect->query("UPDATE ".$table_tag." SET encode='".encode($tag)."', name='".addslashes($tag)."' WHERE zone='".encode($_POST['permalink'])."' AND encode='".$tag_url."'");
-			if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-
-
-			// Update le menu global tags
-
-			// Contenu global tags dans la page courante ?
-			if(@$_POST['global']['tags']) $global_tags = $_POST['global']['tags'];
-			else
-			{
-				// Sinon on regarde s'il y a un menu global tags
-				$sel_tags = $connect->query("SELECT * FROM ".$table_meta." WHERE type='global' AND cle='tags' LIMIT 1");
-				$res_tags = $sel_tags->fetch_assoc();
-
-				$global_tags = $res_tags['val'];
-			}
-
-			if(@$global_tags and @$tag_url and encode(@$tag))
-			{
-				// Changement Url
-				$global_tags = str_replace('/'.$tag_url.'"', '/'.encode($tag).'"', $global_tags);
-
-				// Changement Texte du lien
-				$global_tags = preg_replace('/(\/'.encode($tag).'".*?>).*?(<\/a>)/', '$1'.$_POST['tag'].'$2', $global_tags);
-
-				if($_POST['global']['tags']) $_POST['global']['tags'] = $global_tags;
-				elseif($res_tags['val'])
-				{
-					// Update
-					$connect->query("UPDATE ".$table_meta." SET val='".addslashes($global_tags)."' WHERE type='global' AND cle='tags'");
-					if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-				}
-			}	
-
-			// Si changement de l'url on la change dans le navigateur
-			if(encode($tag) != $tag_url)		
-				$change_url = make_url(get_url($_POST['url']), array($tag, 'absolu' => true));
-		}
-		
-
-		// META
-		// Ajout des données aux meta liée à un contenu
-		if(isset($_POST['meta']) and $_POST['meta'] != "") 
-		{
-			$i = 1;
-			foreach($_POST['meta'] as $cle => $val) 
-			{
-				// Supprime la meta
-				$connect->query("DELETE FROM ".$table_meta." WHERE id='".(int)$_POST['id']."' AND type='".encode($cle)."'");
-
-				// Ajoute la meta si elle contient une variable
-				if(isset($val) and $val != "")
-				{
-					$connect->query("INSERT INTO ".$table_meta." SET id='".(int)$_POST['id']."', type='".encode($cle)."', cle='".addslashes(trim($val))."', val='', ordre='".$i."'");
-					$i++;
-				}
-			}		
-			
-			if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-		}	
-
-
-		// CONTENU GLOBAL
-		// Ajout aux meta de contenu en commun à plusieur page
-		if(isset($_POST['global']) and $_POST['global'] != "") 
-		{
-			foreach($_POST['global'] as $cle => $val)
-			{
-				$connect->query("DELETE FROM ".$table_meta." WHERE type='global' AND cle='".encode($cle)."'");
-
-				if(isset($val) and $val != "") {
-					$val = str_replace($GLOBALS['home'], '', $val);// Supprime le domaine des urls
-
-					$connect->query("INSERT INTO ".$table_meta." SET type='global', cle='".encode($cle)."', val='".addslashes(trim($val))."'");
-				}
-			}
-
-			if($connect->error)	echo "<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
-		}	
-
 
 		// CONTENU
-		//@todo: verif si c'est la bonne technique pour evité l'ecrasement des donnée de la page si page tag
-		if(!isset($_POST['tag-info']))// On verifie que l'on est pas sur une page tag
+		if(isset($_POST['content']) and $_POST['content'] != "")
 		{
 			// Supprime les url avec le domaine pour faciliter le transport du site
-			$_POST['content'] = (isset($_POST['content']) ? str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['content']) : "");
+			//$_POST['content'] = (isset($_POST['content']) ? str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['content']) : "");
 
-			// Encode le contenu
-			if(isset($_POST['content']) and $_POST['content'] != "") 
-				$json_content = json_encode($_POST['content'], JSON_UNESCAPED_UNICODE);
-			else 
-				$json_content = "";
+			// Ouverture du fichier source
+			// En local
+			// Par ftp
 
 
-			// Sauvegarde les contenus
-			$sql = "UPDATE ".$table_content." SET ";
+			// Remplacement du titre
+			// Remplacement de la description
+			// Config Robot
+			// Date de modification
 
-			//@todo ajouter un check si un content n'existe pas déjà avec ce nom. si existe on incremente (check en boucle)
-			if(isset($change_url)) $sql .= "url = '".$change_url."', ";
+			// Remplacement des contenus par la saisie
 
-			$sql .= "title = '".addslashes($_POST['title'])."', ";
-			$sql .= "description = '".addslashes($_POST['description'])."', ";
-			$sql .= "content = '".addslashes($json_content)."', ";
-			$sql .= "robots = '".addslashes(@$_POST['robots'])."', ";
-			$sql .= "state = '".addslashes($_POST['state'])."', ";
-			$sql .= "type = '".$type."', ";
-			$sql .= "tpl = '".addslashes($_POST['tpl'])."', ";
-			$sql .= "user_update = '".(int)$_SESSION['uid']."', ";
-			$sql .= "date_update = NOW(), ";
-			$sql .= "date_insert = '".addslashes(date('Y-m-d H:i:s', strtotime($_POST['date-insert'])))."' ";
-			$sql .= "WHERE url = '".get_url($_POST['url'])."' AND lang = '".$lang."'";
-			$connect->query($sql);
 
-			//echo $sql;
+			// Envoi du fichier si local
+			$dir = (@$GLOBALS['static_dir']?$GLOBALS['static_dir'].'/':'');
+
+			// Supprime le .html statique
+			$url = (isset($change_url)?$change_url:$res['url']);
+
+			$file = $_SERVER["DOCUMENT_ROOT"].$GLOBALS['path'].$dir.$res['url'].'.html';
+
+			@unlink($file);
+
+			// Génération en php
+			// Récupération du contenu de la page
+			$html = curl(make_url($url, array('domaine' => true)));
+
+			// Encodage du contenu html
+			$html = mb_convert_encoding($html, 'UTF-8', 'auto');
+
+			// Création du fichier avec le html
+			file_put_contents($file, time().$html.'<!-- STATIC '.date('d-m-Y H:i:s').' -->');//time().
+			?>
+			<script>
+				$("#progress").css({"opacity":"1", "width":"100%"});
+
+				setTimeout(function() { 
+					$("#progress").css({"opacity":"0"});
+					setTimeout(function() { $("#progress").css({"width":"0"});}, 1000);	
+				}, 1000);
+			</script>
+			<?
+
+			// Envoi du fichier si ftp
 		}
 
 		
-		if($connect->error)// S'il y a une erreur		
-			echo htmlspecialchars($sql)."\n<script>error(\"".htmlspecialchars($connect->error)."\");</script>";
+
+		// S'il y a une erreur		
+		if($error) 
+			echo "\n<script>error(\"".htmlspecialchars($error)."\");</script>";
 		
-		else // Sauvegarde réussit
+		// Sauvegarde réussit
+		else 
 		{
 			?>
 			<script>
 			$(function()
 			{
 				document.title = "<?=addslashes($_POST['title']);?>";
-
-				<?php if(isset($change_url)){?>					
-					window.history.replaceState({}, document.title, "<?=make_url($change_url);?>");//history.state	
-				<?php }?>
-
-				
-				<?php if(@$GLOBALS['static'])// GÉNÉRATION DE LA PAGE EN STATIQUE .HTML
-				{
-					//@todo gerer le cas ou la page n'est pas activé
-					//@todo metre la généaration dans un switch ajax.admin.php et faire une boucle en js sur la génération des url demander en cascade pour voir une progression de la génération des pages (progressbar)
-					//@todo afficher dans un after le nom de la page en cours de génération en dessou de la progressbar
-
-					$dir = (@$GLOBALS['static_dir']?$GLOBALS['static_dir'].'/':'');
-
-					// Supprime le .html statique
-					$url = (isset($change_url)?$change_url:$res['url']);
-
-					$file = $_SERVER["DOCUMENT_ROOT"].$GLOBALS['path'].$dir.$res['url'].'.html';
-
-					@unlink($file);
-
-					// Génération en php
-					// Récupération du contenu de la page
-					$html = curl(make_url($url, array('domaine' => true)));
-
-					// Encodage du contenu html
-					$html = mb_convert_encoding($html, 'UTF-8', 'auto');
-
-					// Création du fichier avec le html
-					file_put_contents($file, time().$html.'<!-- STATIC '.date('d-m-Y H:i:s').' -->');//time().
-					?>
-
-					$("#progress").css({"opacity":"1", "width":"100%"});
-
-					setTimeout(function() { 
-						$("#progress").css({"opacity":"0"});
-						setTimeout(function() { $("#progress").css({"width":"0"});}, 1000);	
-					}, 1000);	
-				<?php }?>
 
 
 				<?php if(@$GLOBALS['img_check'])// Affichage des stats sur les images pour optimisation
@@ -910,158 +390,6 @@ switch($_GET['mode'])
 
 	break;
 
-
-	case "delete":// Supprime le contenu
-
-		include_once("db.php");// Connexion à la db
-
-		//highlight_string(print_r($_POST, true)); exit;
-
-		$type = ($_POST['type']?encode($_POST['type']):"page");// Type de contenu
-
-		login('high', 'edit-'.$type);// Vérifie que l'on a le droit d'éditer le type de contenu
-
-
-		// SUPPRIME LA PAGE
-		$connect->query("DELETE FROM ".$table_content." WHERE url = '".get_url($_POST['url'])."' AND lang = '".$lang."'");
-
-		// SUPPRIME LES TAGS LIÉES
-		$connect->query("DELETE FROM ".$table_tag." WHERE id='".(int)$_POST['id']."'");
-
-
-		if(isset($_POST['medias']))
-		{
-			// Supprime les url avec le domaine pour la suppression locale
-			$_POST['medias'] = str_replace($GLOBALS['home'], "", $_POST['medias']);
-
-			// On a demandé la SUPPRESSION DES FICHIERS liées au contenu
-			foreach($_POST['medias'] as $cle => $media) {
-				// strtok : Supprime les arguments après l'extension (timer...)
-				unlink($_SERVER['DOCUMENT_ROOT'].$GLOBALS['path'].utf8_decode(strtok($media, "?")));
-			}
-		}
-
-
-		if($connect->error) echo $connect->error."\nSQL:\n".$sql;// S'il y a une erreur
-		else // Suppression réussit
-		{
-			?>
-			<script>
-			$(function()
-			{		
-				// Message page supprimé
-				light("<?php _e("Page deleted, redirecting")?> <i class='fa fa-cog fa-spin mlt'></i>");
-
-				// Redirection vers la page d'accueil
-				setTimeout(function(){ document.location.href = "<?=$GLOBALS['home'];?>"; }, 2000);
-			});
-			</script>
-			<?php 
-		}
-
-	break;
-
-
-	case "list-content":// Liste les contenus du site
-
-		include_once("db.php");// Connexion à la db
-
-		login('medium');// Vérifie que l'on a le droit d'éditer une page
-
-		$type = null;
-
-		echo'<div class="dialog-list-content" title="'.__("List of contents").'"><ul class="mtn mbs pls">';
-
-		$sel = $connect->query("SELECT title, state, type, tpl, url, date_update FROM ".$GLOBALS['table_content']." WHERE lang='".$lang."' ORDER BY FIELD(type, 'page', 'article', 'product'), type ASC, title ASC");//date_update DESC
-		while($res = $sel->fetch_assoc()) 
-		{
-			if($res['type'] != $type) echo (isset($type)?'</ul></li>':'').'<li'.(isset($type)?' class="mtm"':'').'><b>'.ucfirst($res['type']).'</b><ul>';
-
-			echo'<li title="'.$res['date_update'].' - '.$res['tpl'].'"><a href="'.make_url($res['url'], array("domaine" => true)).'">'.($res['title']?$res['title']:__("Under Construction")).'</a>'.($res['state'] == "active" ? "":" <i class='fa fa-eye-off' title='".__("Deactivate")."'></i>").'</li>';
-
-			$type = $res['type'];
-		}
-
-		echo"</ul></div>";
-
-	break;
-
-
-	case "make-permalink":// Construit un permalink
-
-		//@todo Vérifier qu'il n'y a pas déjà un contenu avec la même URL
-	
-		login('medium', 'edit-'.($_POST['type']?encode($_POST['type']):"page"));// Vérifie que l'on a le droit d'éditer une page
-
-		echo encode($_POST['title']);
-
-	break;
-
-
-	case "links":// Suggère des pages existante
-
-		include_once("db.php");// Connexion à la db
-
-		login('medium');// Vérifie que l'on a le droit d'éditer une page
-
-		$term = $connect->real_escape_string($_GET["term"]);
-
-		$sql = "SELECT id, title, type, url FROM ".$GLOBALS['table_content']." WHERE title LIKE '%".$term."%' OR url LIKE '%".$term."%'";
-		if(!$term) $sql .= " ORDER BY date_update DESC"; else $sql .= " ORDER BY title ASC";
-		$sql .= " LIMIT 50";
-
-		$sel = $connect->query($sql);
-		while($res = $sel->fetch_assoc()) {
-			$data[] = array(
-				'id' => $res['id'],
-				'label' => $res['title'],
-				'type' => $res['type'],
-				'value' => make_url($res['url'], array("absolu" => true))//, array("domaine" => true)
-			);
-		}
-
-		header("Content-Type: application/json; charset=utf-8");
-
-		echo json_encode($data);
-
-	break;
-
-
-	case "add-nav":// Liste les pages absente du menu
-		
-		login('medium', 'edit-nav');// Vérifie que l'on est admin
-
-		$menu = array();
-
-		// Nettoyage et conversion du menu existant
-		if(isset($_REQUEST['menu']))
-		foreach($_REQUEST['menu'] as $cle => $val)
-		{
-			// Si c'est un lien vers la home
-			if($val == $GLOBALS['home'] or $val == $GLOBALS['path'])
-				$menu[] = "index";
-			else {
-				// Supprime l'url root du site
-				$val = str_replace($GLOBALS['home'], "", $val);
-
-				$menu[] = $connect->real_escape_string($val);
-			}
-		}
-
-		// Quel type de contenu on ressort
-		if(isset($GLOBALS['add_menu']))  $type = "type IN ('".implode("','", $GLOBALS['add_menu'])."')";
-		else $type = "type='page'";
-
-		// Liste les pages abs du menu
-		$sql = "SELECT * FROM ".$table_content." WHERE ".$type." AND lang='".$lang."' AND url NOT IN ('".implode("','", $menu)."') ORDER BY title ASC";
-		//echo $sql."<br>";
-
-		$sel = $connect->query($sql);
-		while($res = $sel->fetch_assoc()) {
-			echo"<li><div class='dragger'></div><a href=\"".$res['url']."\">".$res['title']."</a><i onclick='$(this).parent().appendTo(\"#add-nav ul\");' class='fa fa-cancel red' title='\"+ __(\"Remove\") +\"'></i></li>";
-		}
-
-	break;
 
 
 	case "dialog-media":// Affichage des médias
@@ -1830,27 +1158,5 @@ switch($_GET['mode'])
 		<?php 
 	break;
 
-
-
-	case "tags":// Liste les tags pour l'auto-complete
-		
-		include_once("db.php");// Connexion à la db
-
-		login('medium');
-
-		$sel_tag = $connect->query("SELECT distinct encode, name, ordre FROM ".$table_tag." WHERE zone='".encode($_POST['zone'])."' ORDER BY ordre ASC, encode ASC");
-		while($res_tag = $sel_tag->fetch_assoc()) {
-			$tab_tag[] = $res_tag['name'];
-		}	
-
-		header("Content-Type: application/json; charset=utf-8");
-
-		echo json_encode($tab_tag);//JSON_UNESCAPED_UNICODE
-
-	break;
 }
-
-
-// Fermeture de la connexion
-if(isset($GLOBALS['connect'])) @$GLOBALS['connect']->close();
 ?>
