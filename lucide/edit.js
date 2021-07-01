@@ -134,9 +134,10 @@ save = function() //callback
 
 	// CONTENU DE LA PAGE
 	data["content"] = {};
+	data["content"]["txt"] = {};
 	data["content"]["img"] = {};
 	data["content"]["bg"] = {};
-	i = 1;
+	txt = img = 1;
 
 
 	// Contenu des champs éditables
@@ -145,28 +146,28 @@ save = function() //callback
 		if($(this).hasClass("view-source")) var content_editable = $(this).text();
 		else var content_editable = $(this).html();
 
-		if($(this).html()) data["content"][i] = content_editable;
+		if($(this).html()) data["content"]["txt"][txt] = content_editable;
 
-		++i;
+		++txt;
 	});
 	
 	// Contenu des images éditables
 	$(document).find("img.editable").each(function() {
-		if($(this).attr("src")) data["content"]["img"][i] = $(this).attr("src");
-		++i;
+		if($(this).attr("src")) data["content"]["img"][img] = $(this).attr("src");
+		++img;
 	});
 	
 	// Contenu des background images éditables
 	$(document).find("[data-bg]").each(function() {
-		if($(this).attr("data-bg")) data["content"]["bg"][i] = $(this).attr("data-bg");
-		++i;
+		if($(this).attr("data-bg")) data["content"]["bg"][img] = $(this).attr("data-bg");
+		++img;
 	});
 
 	// Contenu des select, input hidden, href éditables // content+" input, "+
 	$(document).find(".editable-select, .editable-input, .editable-href, .editable-alt").each(function() {
-		if($(this).attr("type") == "checkbox") data["content"][i] = $(this).prop("checked");			
-		else if($(this).val()) data["content"][i] = $(this).val(); 
-		++i;
+		if($(this).attr("type") == "checkbox") data["content"]["txt"][txt] = $(this).prop("checked");			
+		else if($(this).val()) data["content"]["txt"][txt] = $(this).val(); 
+		++txt;
 	});
 
 
