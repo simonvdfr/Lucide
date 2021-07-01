@@ -236,8 +236,6 @@ switch($_GET['mode'])
 			</div>
 
 
-			<div id="progress"></div>
-
 
 			<script>				
 				// Chargement de JQuery
@@ -300,63 +298,111 @@ switch($_GET['mode'])
 
 	case "update":// Sauvegarde du contenu éditable de la page
 
-		highlight_string(print_r($_POST, true)); exit;
+		highlight_string(print_r($_POST, true));// exit;
 
 
 		// Verifie que l'on a la connexion ftp en cours, ou que l'on est en local
 		//login('high', 'edit-'.$type);// Vérifie que l'on peut éditer une page
 		
 
-		// CONTENU
 		if(isset($_POST['content']) and $_POST['content'] != "")
 		{
 			// Supprime les url avec le domaine pour faciliter le transport du site
 			//$_POST['content'] = (isset($_POST['content']) ? str_replace($GLOBALS['home'], @$GLOBALS['replace_path'], $_POST['content']) : "");
 
-			// Ouverture du fichier source
-			// En local
-			// Par ftp
+
+			// Nom du fichier //pathinfo
+			$url = parse_url($_POST['url']);
+			if($url['path'] == '/') $file = 'index.html';
+			else  $file = basename($_POST['url']);
 
 
+			// OUVERTURE DU FICHIER SOURCE
+			if($dev)// En local
+			{
+				//@unlink($file);
+
+				//$file = $_SERVER["DOCUMENT_ROOT"].$GLOBALS['path'].$dir.$res['url'].'.html';
+
+				// Encodage du contenu html
+				//$html = mb_convert_encoding($html, 'UTF-8', 'auto');
+
+				$html = file_get_contents('../'.$file);
+			}
+			else// Par ftp
+			{
+
+			}		
+
+			
+			// CONTENU
 			// Remplacement du titre
+			$html = preg_replace('/(<title>)(.*?)(<\/title>)/i', '$1'.$_POST['title'].'$3', $html);
+
 			// Remplacement de la description
+			//$html = preg_replace('/(<meta name="description" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['description'], ENT_QUOTES, 'UTF-8').'$3', $html);
+
 			// Config Robot
+			//$html = preg_replace('/(<meta name="robots" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
+
 			// Date de modification
+			//$html = preg_replace('/(<meta property="article:published_time" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
+
+
+			//$html = preg_replace('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', '<$1$2$3$4>'.'test'.'</$6>', $html);
 
 			// Remplacement des contenus par la saisie
+			$html = preg_replace_callback('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', function($match) use (&$replacements) {
+				return '<'.$match[1].$match[2].$match[3].$match[4].'>'.array_shift($_POST['content']['txt']).'</'.$match[6].'>';
+			}, $html);
 
 
-			// Envoi du fichier si local
-			$dir = (@$GLOBALS['static_dir']?$GLOBALS['static_dir'].'/':'');
 
-			// Supprime le .html statique
-			$url = (isset($change_url)?$change_url:$res['url']);
+			// Remplacement les image
+			//(?<=src\=\").+(?=\"(\s|\/\>))
+			//src='([^\"]*)
+			/*echo preg_replace_callback('~src=""([^\"]*)"~i', function($match) use (&$replacements) {
+				return array_shift($_POST['content']['img']);
+			}, $html);*/
+			//preg_replace('#<img[^>]+class="[^"]*replace[^"]*"[^>]*>#', '', $html);
+			//$html = preg_replace('/(<img src=".*?imgur\.com(.*?))(?=\/?\s? >)/s', 'test', $html);
 
-			$file = $_SERVER["DOCUMENT_ROOT"].$GLOBALS['path'].$dir.$res['url'].'.html';
+			$dom = new DOMDocument();
+			@$dom->loadHTML($html);
+			$xp = new DOMXPath($dom);
+			$elements = $xp->query("//img[@class='editable']");
+			
+			if (!is_null($elements)) {
+				foreach ($elements as $element) {
+					echo "<br/>[". $element->nodeName. "]";
 
-			@unlink($file);
+					$nodes = $element->childNodes;
+					foreach ($nodes as $node) {
+						echo $node->nodeValue. "\n";
+					}
+				}
+			}
 
-			// Génération en php
-			// Récupération du contenu de la page
-			$html = curl(make_url($url, array('domaine' => true)));
+			/*foreach($elements as $element) {
+				//echo "<br/>[". $element->nodeName. "]";
+				//$element = $imgs->item(0);
+				print_r($element->getAttribute('src'));
+			}*/
 
-			// Encodage du contenu html
-			$html = mb_convert_encoding($html, 'UTF-8', 'auto');
+			
 
-			// Création du fichier avec le html
-			file_put_contents($file, time().$html.'<!-- STATIC '.date('d-m-Y H:i:s').' -->');//time().
-			?>
-			<script>
-				$("#progress").css({"opacity":"1", "width":"100%"});
 
-				setTimeout(function() { 
-					$("#progress").css({"opacity":"0"});
-					setTimeout(function() { $("#progress").css({"width":"0"});}, 1000);	
-				}, 1000);
-			</script>
-			<?
 
-			// Envoi du fichier si ftp
+			// ECRITURE DU FICHIER
+			if($dev)// En local
+			{
+				echo"<pre>".htmlspecialchars($html)."</pre>";
+				//file_put_contents('../'.$file, $html);//time().
+			}
+			else// Envoi du fichier si ftp
+			{
+
+			}
 		}
 
 		
