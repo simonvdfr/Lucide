@@ -298,7 +298,7 @@ switch($_GET['mode'])
 
 	case "update":// Sauvegarde du contenu éditable de la page
 
-		highlight_string(print_r($_POST, true));// exit;
+		//highlight_string(print_r($_POST, true));// exit;
 
 
 		// Verifie que l'on a la connexion ftp en cours, ou que l'on est en local
@@ -336,11 +336,19 @@ switch($_GET['mode'])
 
 			
 			// CONTENU
+
+			// Extraction de la dom
+			$dom = new DOMDocument();
+			@$dom->loadHTML($html);
+			$xp = new DOMXPath($dom);
+
 			// Remplacement du titre
-			$html = preg_replace('/(<title>)(.*?)(<\/title>)/i', '$1'.$_POST['title'].'$3', $html);
+			//$html = preg_replace('/(<title>)(.*?)(<\/title>)/i', '$1'.$_POST['title'].'$3', $html);
+			//$dom->getElementsByTagName("title")->item(0)->nodeValue = $_POST['title'];
 
 			// Remplacement de la description
 			//$html = preg_replace('/(<meta name="description" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['description'], ENT_QUOTES, 'UTF-8').'$3', $html);
+			//$dom->getElementsByTagName("description")->item(0)->nodeValue = htmlspecialchars($_POST['description'], ENT_QUOTES, 'UTF-8');
 
 			// Config Robot
 			//$html = preg_replace('/(<meta name="robots" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
@@ -348,49 +356,40 @@ switch($_GET['mode'])
 			// Date de modification
 			//$html = preg_replace('/(<meta property="article:published_time" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
 
-
-			//$html = preg_replace('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', '<$1$2$3$4>'.'test'.'</$6>', $html);
-
 			// Remplacement des contenus par la saisie
-			$html = preg_replace_callback('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', function($match) use (&$replacements) {
+			/*$html = preg_replace_callback('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', function($match) use (&$replacements) {
 				return '<'.$match[1].$match[2].$match[3].$match[4].'>'.array_shift($_POST['content']['txt']).'</'.$match[6].'>';
-			}, $html);
-
-
+			}, $html);*/
 
 			// Remplacement les image
-			//(?<=src\=\").+(?=\"(\s|\/\>))
-			//src='([^\"]*)
-			/*echo preg_replace_callback('~src=""([^\"]*)"~i', function($match) use (&$replacements) {
-				return array_shift($_POST['content']['img']);
-			}, $html);*/
-			//preg_replace('#<img[^>]+class="[^"]*replace[^"]*"[^>]*>#', '', $html);
-			//$html = preg_replace('/(<img src=".*?imgur\.com(.*?))(?=\/?\s? >)/s', 'test', $html);
-
-			$dom = new DOMDocument();
-			@$dom->loadHTML($html);
-			$xp = new DOMXPath($dom);
-			$elements = $xp->query("//img[@class='editable']");
-			
-			if (!is_null($elements)) {
-				foreach ($elements as $element) {
-					echo "<br/>[". $element->nodeName. "]";
-
-					$nodes = $element->childNodes;
-					foreach ($nodes as $node) {
-						echo $node->nodeValue. "\n";
-					}
-				}
-			}
-
-			/*foreach($elements as $element) {
-				//echo "<br/>[". $element->nodeName. "]";
-				//$element = $imgs->item(0);
-				print_r($element->getAttribute('src'));
+			/*$imgs = $xp->query("//img[contains(@class, 'editable')]");
+			foreach($imgs as $img) {
+				$img->SetAttribute("src", array_shift($_POST['content']['img']));
 			}*/
 
-			
+			// Remplacement des contenus texte et image
+			reset($_POST['content']['txt']);
+			$elements = $xp->query("//*[contains(@class, 'editable')]");
+			foreach($elements as $element) 
+			{
+				// @todo bug dans l'ordre de restitution
+				if($element->nodeName == 'img')// C'est une image éditable
+				{
+					echo $element->nodeName." -> ".$element->getAttribute('src')." ***<br>"; 
+					$element->SetAttribute("src", array_shift($_POST['content']['img']));
+				}
+				else// C'est un contenu textuel
+				{
+					//textContent
+					echo $element->nodeName." <b>nodeValue</b> -> ".htmlspecialchars($element->nodeValue)."<br>"; 
+					$element->nodeValue = array_shift($_POST['content']['txt']);
+				}
+			}
+						
 
+			// Sauvegarde les modifications
+			$html = $dom->saveHTML();
+			
 
 
 			// ECRITURE DU FICHIER
