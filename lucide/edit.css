@@ -1033,24 +1033,24 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 	position: absolute;
 	display: none;
 
-	opacity: 0.8;
-	z-index: 11;
+	/* opacity: 0.8; SUPP
+	z-index: 11; */
 
-	animation: fadeInToolbox .3s ease-in;
-	transition: all .24s ease-in-out;
+	/* animation: fadeInToolbox .3s ease-in;
+	transition: all .24s ease-in-out; */
 }
-	@keyframes fadeInToolbox {
+	/* @keyframes fadeInToolbox {
 		0% { opacity: 0; }
 		100% { opacity: 0.8; }
-	}
+	} */
 
 	.toolbox li {
-		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+		/* box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3); */
 		float: left;		
 		height: 26px;
 	}
 	.toolbox button {
-		background: #fff linear-gradient(#ffffff, #eaeaea) repeat scroll 0 0;
+		/* background: #fff linear-gradient(#ffffff, #eaeaea) repeat scroll 0 0;
 		box-shadow: 0 0 0 1px #fff inset;
 
 		box-sizing: border-box;
@@ -1058,7 +1058,7 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 		border: 1px solid #d3d3d3;
 		border-radius: inherit;
 
-		cursor: pointer;
+		cursor: pointer; */
 
 		/*vertical-align: bottom; SUPP ?*/
 
@@ -1081,9 +1081,9 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 			background: #6fcdd5 linear-gradient(#6fcdd5, #e5f6f1) repeat scroll 0 0;
 			box-shadow: 0 0 0 1px #6fcdd5 inset;
 		}
-		.toolbox li:first-child, .toolbox li:last-child button {
+		/* .toolbox li:first-child, .toolbox li:last-child button {
 			border-radius: 4px 0 0 4px;
-		}
+		} */
 		.toolbox li:last-child, .toolbox li:last-child button {
 			border-radius: 0 4px 4px 0;
 			height: 26px !important;
@@ -1097,26 +1097,6 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 
 	.toolbox:hover {
 		opacity: 1;
-	}
-
-	/* Fleche sous la toolbox */
-	.toolbox:after {
-		border: 6px solid transparent;
-		border-top-color: #d3d3d3;
-		content: ' ';
-		position: absolute;
-		margin-left: -7px;
-		bottom: -12px;
-		left: 12px;/*50%*/
-		height: 0px;
-		width: 0px;
-	}
-
-	/* Fleche au dessu de la toolbox */
-	.toolbox.under:after { 
-		border-bottom-color: #d4d4d4;
-		border-top-color: transparent;
-		top: -12px;
 	}
 
 	.toolbox .option {

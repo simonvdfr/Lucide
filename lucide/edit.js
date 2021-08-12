@@ -385,11 +385,7 @@ link_option = function()
 	
 	// Affichage des options pour le lien
 	// 300, car "slide" Crée un bug du chargement de l'autocomplete
-	$("#txt-tool #link-option").show(300, function() {
-		toolbox_height = $("#txt-tool").outerHeight();
-		this_top_scroll = this_top - toolbox_height - 12;
-		toolbox_position(this_top_scroll, this_left);
-	});
+	$("#txt-tool #link-option").show(300);
 }
 
 // Supprime le lien autour
@@ -1407,21 +1403,8 @@ $(function()
 	toolbox+= "</ul>";
 	
 	// Init la toolbox
-	$("body").append(toolbox);
+	$("#meta").after(toolbox);
 	
-	// Fonction de positionnement de la toolbox
-	toolbox_position = function(top, left, position) {		
-		// Valeur par défaut de "position"
-		if(typeof position === 'undefined') var position = "absolute";
-
-		// Posionnement
-		$("#txt-tool").css({
-			top: top + "px",
-			left: left + "px",
-			position: position
-		});
-	}	
-
 	// Action sur les champs éditables
 	editable_event = function()
 	{	
@@ -1436,7 +1419,8 @@ $(function()
 			"blur.editable": function() {
 				if($("#txt-tool:not(:hover)").val()=="") {
 					$("#txt-tool").hide();// ferme la toolbox
-					$(window).off(".scroll-toolbox");// Désactive le scroll de la toolbox
+					$("#meta").show();// Affichage des metas
+					//$(window).off(".scroll-toolbox");// Désactive le scroll de la toolbox
 				}
 			},
 			"dragstart.editable": function() {// Pour éviter les interférences avec les drag&drop d'image dans les champs images
@@ -1508,21 +1492,8 @@ $(function()
 					if($("#txt-tool").css("display") == "none")// Si pas visible // init			
 					$("#txt-tool")
 						.show(function(){
-							// Positionnement en fonction de la hauteur de la toolbox une fois visible
-							toolbox_height = $("#txt-tool").outerHeight();
-							this_top_scroll = this_top - toolbox_height - 12;
-
-							toolbox_position(this_top_scroll, this_left);
+							$("#meta").hide();// Masque les metas
 						});	
-
-					// Positionnement de la toolbox si déjà affiché et gestion du Scroll si on descend
-					$(window).on("scroll click.scroll-toolbox", function(event) {
-						// Si (Hauteur du scroll + hauteur de la bar d'admin en haut + hauteur de la toolbox + pico) > au top de la box editable = on fixe la position de la toolbox en dessou de la barre admin
-						if(($(window).scrollTop() + toolbox_height + 12) > this_top_scroll) 
-							toolbox_position(adminbar_height, this_left, "fixed");
-						else
-							toolbox_position(this_top_scroll, this_left, "absolute");
-					});
 				}
 
 
@@ -1670,6 +1641,7 @@ $(function()
 
 		// Masque la toolbox d'edition des textes
 		$("#txt-tool").hide();// ferme la toolbox
+		$("#meta").show();
 		
 		// Mémorise l'image sélectionnée
 		memo_img = this;		
