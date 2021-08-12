@@ -318,7 +318,7 @@ switch($_GET['mode'])
 			// Nom du fichier //pathinfo
 			$url = parse_url($_POST['url']);
 			if($url['path'] == '/') $file = 'index.html';
-			else  $file = basename($_POST['url']);
+			else $file = basename($_POST['url']);
 
 
 			// OUVERTURE DU FICHIER SOURCE
@@ -346,30 +346,6 @@ switch($_GET['mode'])
 			@$dom->loadHTML($html);
 			$xp = new DOMXPath($dom);
 
-			// Remplacement du titre
-			//$html = preg_replace('/(<title>)(.*?)(<\/title>)/i', '$1'.$_POST['title'].'$3', $html);
-			//$dom->getElementsByTagName("title")->item(0)->nodeValue = $_POST['title'];
-
-			// Remplacement de la description
-			//$html = preg_replace('/(<meta name="description" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['description'], ENT_QUOTES, 'UTF-8').'$3', $html);
-			//$dom->getElementsByTagName("description")->item(0)->nodeValue = htmlspecialchars($_POST['description'], ENT_QUOTES, 'UTF-8');
-
-			// Config Robot
-			//$html = preg_replace('/(<meta name="robots" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
-
-			// Date de modification
-			//$html = preg_replace('/(<meta property="article:published_time" content=")(.*?)(">)/i', '$1'.htmlspecialchars($_POST['robots'], ENT_QUOTES, 'UTF-8').'$3', $html);
-
-			// Remplacement des contenus par la saisie
-			/*$html = preg_replace_callback('~<(\w+)([^>]*)(class\\s*=\\s*["\']editable["\'])([^>]*)>(.*?)</(\w+)>~is', function($match) use (&$replacements) {
-				return '<'.$match[1].$match[2].$match[3].$match[4].'>'.array_shift($_POST['content']['txt']).'</'.$match[6].'>';
-			}, $html);*/
-
-			// Remplacement les image
-			/*$imgs = $xp->query("//img[contains(@class, 'editable')]");
-			foreach($imgs as $img) {
-				$img->SetAttribute("src", array_shift($_POST['content']['img']));
-			}*/
 
 			// Remplacement des contenus texte et image
 			reset($_POST['content']['txt']);
@@ -379,15 +355,13 @@ switch($_GET['mode'])
 				if($element->nodeName == 'img')// C'est une image éditable
 				{
 					$img = array_shift($_POST['content']['img']);
-
-					echo $element->nodeName." -> curent ".$element->getAttribute('src')." | array img :".$img."<br>"; 
-
+					//echo $element->nodeName." -> curent ".$element->getAttribute('src')." | array img :".$img."<br>"; 
 					$element->SetAttribute("src", $img);
 				}
 				else// C'est un contenu textuel
 				{
 					//textContent
-					echo $element->nodeName." <b>nodeValue</b> -> ".htmlspecialchars($element->nodeValue)."<br>"; 
+					//echo $element->nodeName." <b>nodeValue</b> -> ".htmlspecialchars($element->nodeValue)."<br>"; 
 					$element->nodeValue = array_shift($_POST['content']['txt']);
 				}
 			}
@@ -401,8 +375,8 @@ switch($_GET['mode'])
 			// ECRITURE DU FICHIER
 			if($dev)// En local
 			{
-				echo"<pre>".htmlspecialchars($html)."</pre>";
-				//file_put_contents('../'.$file, $html);//time().
+				//echo"<pre>".htmlspecialchars($html)."</pre>";
+				file_put_contents('../'.$file, $html);//time().
 			}
 			else// Envoi du fichier si ftp
 			{
