@@ -368,7 +368,7 @@ switch($_GET['mode'])
 						
 
 			// Sauvegarde les modifications
-			$html = $dom->saveHTML();
+			$html = trim(html_entity_decode($dom->saveHTML()));
 			
 
 
