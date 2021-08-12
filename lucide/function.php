@@ -862,6 +862,8 @@ function token_check($token)
 // Connexion au site avec le système interne de login+password
 function login($level = 'low', $auth = null, $quiet = null)
 {	
+	/*
+	
 	//////// Le level détermine le niveau de vérification pour des taches plus ou moins sensible
 	// low : Vérif juste s'il y a un token dans la session
 	// medium : Check le contenu du token
@@ -1043,6 +1045,7 @@ function login($level = 'low', $auth = null, $quiet = null)
 		exit;
 	}
 	elseif ($quiet == 'error') {?><script>$(function() {error("<?=$msg?>", 4000); });</script><?php }
+	*/
 }
 
 function logout($redirect = null)

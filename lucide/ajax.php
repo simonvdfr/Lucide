@@ -149,6 +149,7 @@ switch($_GET['mode'])
 
 				<div id="meta-responsive" class="fl mat none small-screen"><i class="fa fa-fw fa-pencil bigger" title="<?php _e("Page title")?>"></i></div>
 
+
 				<div id="meta" class="fl mat w30 no-small-screen">
 
 					<input type="text" id="title" value="" placeholder="<?php _e("Page title")?>" title="<?php _e("Page title")?>" maxlength="70" class="w100 bold">
@@ -224,7 +225,10 @@ switch($_GET['mode'])
 						</div>
 					</div>
 
-				</div>		
+				</div>
+
+
+				<div class="dialog"></div>
 
 
 				<div id="close" class="fr mrt big" title="<?php _e("Close the edit mode")?>"><i class="fa fa-fw fa-cancel vatt"></i></div>
@@ -372,11 +376,13 @@ switch($_GET['mode'])
 			$elements = $xp->query("//*[contains(@class, 'editable')]");
 			foreach($elements as $element) 
 			{
-				// @todo bug dans l'ordre de restitution
 				if($element->nodeName == 'img')// C'est une image éditable
 				{
-					echo $element->nodeName." -> ".$element->getAttribute('src')." ***<br>"; 
-					$element->SetAttribute("src", array_shift($_POST['content']['img']));
+					$img = array_shift($_POST['content']['img']);
+
+					echo $element->nodeName." -> curent ".$element->getAttribute('src')." | array img :".$img."<br>"; 
+
+					$element->SetAttribute("src", $img);
 				}
 				else// C'est un contenu textuel
 				{
@@ -468,20 +474,20 @@ switch($_GET['mode'])
 
 				<li data-filter="all"><a href="#media" title="<?php _e("Media")?>"><i class="fa fa-doc"></i> <span><?php _e("Media")?></span></a></li>
 
-				<!-- <li data-filter="file"><a href="api/ajax.admin.php?mode=media&filter=file" title="<?php _e("Files")?>"><i class="fa fa-file-text-o"></i> <span><?php _e("Files")?></span></a></li> -->	
+				<!-- <li data-filter="file"><a href="api/ajax.php?mode=media&filter=file" title="<?php _e("Files")?>"><i class="fa fa-file-text-o"></i> <span><?php _e("Files")?></span></a></li> -->	
 
-				<!-- <li data-filter="image"><a href="api/ajax.admin.php?mode=media&filter=image" title="<?php _e("Images")?>"><i class="fa fa-picture-o"></i> <span><?php _e("Images")?></span></a></li> -->
+				<!-- <li data-filter="image"><a href="api/ajax.php?mode=media&filter=image" title="<?php _e("Images")?>"><i class="fa fa-picture-o"></i> <span><?php _e("Images")?></span></a></li> -->
 
-				<li data-filter="resize"><a href="api/ajax.admin.php?mode=media&filter=resize" title="<?php _e("Resized")?>"><i class="fa fa-resize-small"></i> <span><?php _e("Resized")?></span></a></li>
+				<li data-filter="resize"><a href="api/ajax.php?mode=media&filter=resize" title="<?php _e("Resized")?>"><i class="fa fa-resize-small"></i> <span><?php _e("Resized")?></span></a></li>
 
 
 				<?php if(isset($_REQUEST['dir']) and $_REQUEST['dir']){?>
-				<li data-filter="dir"><a href="api/ajax.admin.php?mode=media&filter=dir&dir=<?=urlencode($_REQUEST['dir']);?>" title="<?php _e("Specific")?>"><i class="fa fa-file"></i> <span><?php _e("Specific")?></span></a></li>
+				<li data-filter="dir"><a href="api/ajax.php?mode=media&filter=dir&dir=<?=urlencode($_REQUEST['dir']);?>" title="<?php _e("Specific")?>"><i class="fa fa-file"></i> <span><?php _e("Specific")?></span></a></li>
 				<?php }?>
 
-				<!-- <li data-filter="video"><a href="api/ajax.admin.php?mode=media&filter=video" title="<?php _e("Videos")?>"><i class="fa fa-film"></i> <span><?php _e("Videos")?></span></a></li>
+				<!-- <li data-filter="video"><a href="api/ajax.php?mode=media&filter=video" title="<?php _e("Videos")?>"><i class="fa fa-film"></i> <span><?php _e("Videos")?></span></a></li>
 
-				<li data-filter="audio"><a href="api/ajax.admin.php?mode=media&filter=audio" title="<?php _e("Audios")?>"><i class="fa fa-volume-up"></i> <span><?php _e("Audios")?></span></a></li> -->
+				<li data-filter="audio"><a href="api/ajax.php?mode=media&filter=audio" title="<?php _e("Audios")?>"><i class="fa fa-volume-up"></i> <span><?php _e("Audios")?></span></a></li> -->
 
 			</ul>
 			
@@ -489,7 +495,7 @@ switch($_GET['mode'])
 				<?php 
 				$_GET['mode'] = "media";
 
-				include("ajax.admin.php");
+				include("ajax.php");
 				?>
 			</div>
 
@@ -632,7 +638,7 @@ switch($_GET['mode'])
 						var id = $(this).parent().attr("id");
 						
 						$.ajax({
-							url: "api/ajax.admin.php?mode=del-media",
+							url: "api/ajax.php?mode=del-media",
 							data: {
 								"file": $("#"+id).attr("data-media"),
 								"nonce": $("#nonce").val()
@@ -662,7 +668,7 @@ switch($_GET['mode'])
 						// On inject le contenu du dossier
 						$.ajax({
 							type: "POST",
-							url: path+"api/ajax.admin.php?mode=media&inject=true&filter=dir&dir="+$(this).attr("data-dir"),
+							url: path+"api/ajax.php?mode=media&inject=true&filter=dir&dir="+$(this).attr("data-dir"),
 							data: {
 								//"dir": dir,
 								"nonce": $("#nonce").val()

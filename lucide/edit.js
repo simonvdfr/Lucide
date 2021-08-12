@@ -153,7 +153,7 @@ save = function() //callback
 	
 	// Contenu des images éditables
 	$(document).find("img.editable").each(function() {
-		if($(this).attr("src")) data["content"]["img"][img] = $(this).attr("src");
+		data["content"]["img"][img] = $(this).attr("src");
 		++img;
 	});
 	
@@ -493,8 +493,6 @@ view_source = function(memo, force){
 // Dialog box avec effet de transfert
 dialog = function(mode, source, target, callback) {
 
-	// @todo: faire en sorte que la dialog fadeIn et fadeOut lorsqu'elle apparaît/disparaît. Pas juste visibility:hidden/visible...
-
 	$.ajax({
 			type: "POST",
 			url: path+"lucide/ajax.php?mode=dialog-"+mode, 
@@ -513,12 +511,15 @@ dialog = function(mode, source, target, callback) {
 			$(".dialog-"+mode).remove();
 			
 			// Création de la dialog invisible
-			$("body").append(html);
+			//$("body").append(html);
+			$(".dialog").append(html);
+			$("#meta").hide();
 
 			// Si l'ajax renvoie bien la dialog demandée
 			if($(".dialog-"+mode).length) 
 			{			
-				// Instanciation de la dialog en mode invisible
+				/*
+				// Instanciation de la dialog en mode invisible				
 				$(".dialog-"+mode).dialog({
 					modal: true,
 					autoOpen: false,
@@ -564,7 +565,8 @@ dialog = function(mode, source, target, callback) {
 				$("body").on("keydown.dialog-escape", function(event) {
 					if(event.keyCode === $.ui.keyCode.ESCAPE) $(".dialog-"+mode).dialog('close');
 					event.stopPropagation();
-				});;	
+				});;
+				*/
 			}
 		});
 }
