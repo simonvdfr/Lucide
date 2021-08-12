@@ -581,7 +581,8 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 		opacity: .6;
 	}
 
-	.editable-media[placeholder]:before { 
+	/* @todo voir si ça fonctionne ? */
+	img.editable[placeholder]:before { 
 		content: attr(placeholder);
 		opacity: .6;
 		padding-top: 0.5rem;
@@ -590,7 +591,7 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 		left: 0;
 		right: 0;
 	}
-		.editable-media[placeholder]:hover:before { content: ''; }
+		img.editable[placeholder]:hover:before { content: ''; }
 
 	.editable .ui-wrapper {		
 		overflow: inherit !important;
@@ -607,7 +608,7 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 
 
 /* image & fichier éditable */
-.lucide .editable-media {
+.lucide img.editable {
 	background-color: rgba(61, 128, 179, 0.05);
 	display: inline-block;
     position: relative;
@@ -617,7 +618,8 @@ article { /*width: 100%;*/ }/* pour que le bloc éditable prenne bien toute la l
 	min-height: 60px;
 	border: 1px dotted rgba(61, 128, 179, 0.2);
 }
-	.lucide .editable-media img { 
+/* @todo revoir car maintenant plus de cadre autour de l'image */
+	.lucide img.editable { 
 		margin: -1px;
 		transition: none !important;/* Plus stable pour les drag&drop */
 	}
